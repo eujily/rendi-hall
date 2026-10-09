@@ -1,6 +1,7 @@
 # Rendi Hall — спецификация концепта
 
 **Дата:** 2026-10-09 · **Статус:** на ревью у Жеки
+**Дизайн системы:** [system-design.md](system-design.md) — appState, порядок кадра, деградация
 **Решения:** [ADR-001 стиль](adr/ADR-001-visual-style.md) · [ADR-002 экран продукта](adr/ADR-002-product-view.md) · [ADR-003 стек](adr/ADR-003-stack-delivery.md)
 
 ## 1. Цель
@@ -174,15 +175,16 @@ rendi-hall/
   index.html
   src/
     main.js            — сборка сцены, порядок update, связывание модулей
-    core/  events.js  loop.js  layout.js  tokens.js  motion.js (reduced-motion live-флаг)
+    core/  appState.js  events.js  loop.js  layout.js  tokens.js  motion.js (reduced-motion live-флаг)
+           quality.js (адаптивное качество)  debug.js (только ?debug)
     kit/   toon.js
     world/ hall.js
     actors/ randy.js  npc.js
     stands/ learn.js pay.js flow.js care.js home.js studio.js waitlist.js  index.js
     systems/ input.js movement.js proximity.js cameraRig.js
-    ui/    tokens.css hud.css prompt.js productView.js chat.js bubble.js hud.js skipList.js
+    ui/    tokens.css hud.css prompt.js productView.js chat.js bubble.js hud.js skipList.js fallback.js
     content/ content.json
-  tests/  movement.test.js proximity.test.js chat.test.js
+  tests/  movement.test.js proximity.test.js chat.test.js appState.test.js content.test.js
 ```
 
 ### Контракты (не менять без оркестратора)
@@ -193,7 +195,11 @@ export const bus = { on(type, fn), off(type, fn), emit(type, payload) };
 // события:
 // 'proximity:enter' {kind:'stand'|'npc', id}   'proximity:leave' {kind, id}
 // 'stand:open' {id}  'stand:opened' {id}  'stand:close' {id}  'stand:closed' {id}
-// 'npc:talk' {id}    'ui:lock' {locked:boolean}  'player:firstMove' {}
+// 'npc:talk' {id}    'player:firstMove' {}   'webgl:lost' {}
+// блокировку ввода не шлём событием — input читает appState.is('EXPLORE')
+
+// core/appState.js — единственный владелец режима (см. system-design §3)
+appState.mode; appState.focusedId; appState.is(...modes); appState.request(event, payload) → bool
 
 // stands/<id>.js — default export
 {
@@ -240,7 +246,7 @@ focus ring 2px `--purple-link`; контраст текста ≥ 4.5:1 (`--purp
 
 ## 9. Тестирование и приёмка
 
-- vitest: `movement` (скольжение, границы), `proximity` (ближайший, гистерезис), `chat` (переходы узлов, action).
+- vitest: `movement` (скольжение, границы), `proximity` (ближайший, гистерезис), `chat` (переходы узлов, action), `appState` (таблица переходов, прерывание OPENING), `content` (целостность графов и раскладки).
 - Визуальная приёмка оркестратором после каждой волны в браузерной панели: скриншоты desktop 1440×900 и mobile 375×812, консоль без ошибок.
 - Финал: Lighthouse perf ≥ 80 desktop, ручной проход всех 7 стендов клавиатурой и мышью.
 
