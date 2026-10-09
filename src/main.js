@@ -423,4 +423,4 @@ fontsReady.then(() => wait(0.4)).then(() => {
   if (deep && spotById[deep]) teleportAndOpen(deep);
 });
 
-if (import.meta.env.DEV) Object.assign(window, { __rendi: { scene, renderer, rig, appState, randy, stands, zones, enterZone, travel, openSpot } });
+if (import.meta.env.DEV) Object.assign(window, { __rendi: { THREE, scene, renderer, rig, appState, randy, stands, zones, enterZone, travel, openSpot } });

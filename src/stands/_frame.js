@@ -4,7 +4,7 @@
 //
 // Detail pass: bevelled rounded bezel (clean flat white), slim black inner border, glass pane with a
 // diagonal reflection, tabbed title bar + url pill, status strip with tiny icons, accent glow line,
-// a lamp arm with a transparent spotlight cone + light pool, and a museum info plaque on the wall.
+// a lamp arm, and a museum info plaque on the wall.
 // Draw calls per frame: ~12 (3 merged colour buckets + outlines + 7 painted planes + LED).
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
@@ -17,7 +17,6 @@ const LINING = mix(COLORS.lavender, COLORS.white, 0.3);
 const LINE = mix(COLORS.lavender, COLORS.black, 0.06);
 const DOT = mix(COLORS.lavender, COLORS.black, 0.12);
 const INK = mix(COLORS.lavender, COLORS.black, 0.45); // muted text / placeholder tone
-const BEAM = mix(COLORS.yellow, COLORS.white, 0.35);
 
 const box = (w, h, d, x, y, z, rx = 0) => {
   const g = new THREE.BoxGeometry(w, h, d);
@@ -429,38 +428,6 @@ function ringGeometry(x, y, w, h, grow, thick, z) {
   return g.translate(0, 0, z);
 }
 
-/** Cone of light from the lamp to the floor + a light pool, one transparent mesh with vertex alpha. */
-function beamGeometry(lampY, lampZ, lean, R) {
-  const cone = new THREE.CylinderGeometry(0.17, R, lampY, 28, 1, true);
-  cone.deleteAttribute('uv');
-  cone.deleteAttribute('normal');
-  cone.translate(0, lampY / 2, 0);
-  const cp = cone.getAttribute('position');
-  const cc = new Float32Array(cp.count * 4);
-  const base = new THREE.Color(BEAM);
-  for (let i = 0; i < cp.count; i++) {
-    const y = cp.getY(i);
-    const t = y / lampY; // 1 at the lamp, 0 at the floor
-    cp.setZ(i, cp.getZ(i) + lampZ + (1 - t) * lean);
-    cp.setY(i, y + 0.0);
-    cc.set([base.r, base.g, base.b, 0.01 + 0.15 * t * t], i * 4);
-  }
-  cone.setAttribute('color', new THREE.BufferAttribute(cc, 4));
-  const pool = new THREE.CircleGeometry(R * 1.05, 32);
-  pool.deleteAttribute('uv');
-  pool.deleteAttribute('normal');
-  pool.rotateX(-Math.PI / 2);
-  pool.translate(0, 0.045, lampZ + lean);
-  const pp = pool.getAttribute('position');
-  const pc = new Float32Array(pp.count * 4);
-  for (let i = 0; i < pp.count; i++) {
-    const r = Math.hypot(pp.getX(i), pp.getZ(i) - (lampZ + lean)) / (R * 1.05);
-    pc.set([base.r, base.g, base.b, 0.1 * (1 - r) ** 1.5], i * 4);
-  }
-  pool.setAttribute('color', new THREE.BufferAttribute(pc, 4));
-  return mergeGeometries([cone, pool], false);
-}
-
 /**
  * @param {{ label: string, accent: number, url: string, index?: number }} opts
  * @returns {{ root: THREE.Group, mount: THREE.Group }}
@@ -544,16 +511,6 @@ export function createExhibitFrame({ label, accent, url, index = 1 }) {
   plane(IW, YT - BASE, glassTexture(), 0, (YT + BASE) / 2, D - 0.02, { transparent: true, order: 3, name: 'frame-glass' });
   plane(W - 0.3, 0.5, glowTexture(accent), 0, 0.6, D + 0.02, { transparent: true, order: 2, name: 'frame-glow' });
   plane(0.5, 0.72, plaqueTexture(label, accent, index), PX, 2.0, 0.071, { name: 'frame-plaque' });
-
-  // spotlight cone + floor pool (transparent, vertex alpha)
-  const beam = new THREE.Mesh(
-    beamGeometry(LAMP_Y - 0.25, LAMP_Z, 0.9, 1.05),
-    new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, depthWrite: false, side: THREE.DoubleSide }),
-  );
-  beam.name = 'frame-beam';
-  beam.renderOrder = 1;
-  beam.raycast = () => {};
-  root.add(beam);
 
   // blinking status LED in the strip's socket (alternates accent / white)
   const ledMat = new THREE.MeshBasicMaterial({ color: accent });
