@@ -1,11 +1,23 @@
 // NPC visitors: same species as Randy, brand colours, slightly different petals (seed).
 // They walk their waypoints in a loop at 1.6 u/s, pause 2–4 s at each point and turn to
 // look at the nearest look-at point while they wait.
-import { createBlob } from './blob.js';
+import { createBlob, ACCESSORIES } from './blob.js';
 import { COLORS } from '../core/tokens.js';
 import { mulberry32 } from './silhouette.js';
 
 const SPEED = 1.6;
+
+// Each villager gets a distinct accessory, chosen by a hash of its id (first free one if it collides).
+const taken = new Map(); // id → accessory
+function pickAccessory(id) {
+  if (taken.has(id)) return taken.get(id);
+  const h = [...id].reduce((a, c) => (Math.imul(a, 31) + c.charCodeAt(0)) >>> 0, 7);
+  const used = new Set(taken.values());
+  let i = h % ACCESSORIES.length;
+  for (let k = 0; k < ACCESSORIES.length && used.has(ACCESSORIES[i]); k++) i = (i + 1) % ACCESSORIES.length;
+  taken.set(id, ACCESSORIES[i]);
+  return ACCESSORIES[i];
+}
 const ARRIVE = 0.08;
 
 function nearestPoint(points, x, z) {
@@ -21,9 +33,15 @@ function nearestPoint(points, x, z) {
  * @param {{ id: string, color: 'yellow'|'red'|'white'|'purple', waypoints: {x:number,z:number}[], lookAt?: {x:number,z:number}[] }} opts
  */
 export function createNpc({ id, color, waypoints, lookAt = [] }) {
-  const { object3d, rig } = createBlob({ color: color === 'purple' ? COLORS.purple : (COLORS[color] ?? COLORS.mascot), seed: id, scale: 0.9 });
-  object3d.name = `npc-${id}`;
   const rnd = mulberry32([...id].reduce((h, c) => h * 31 + c.charCodeAt(0), 7));
+  const size = 0.9 * (0.93 + 0.14 * rnd()); // slight size variation
+  const { object3d, rig } = createBlob({
+    color: color === 'purple' ? COLORS.purple : (COLORS[color] ?? COLORS.mascot),
+    seed: id,
+    scale: size,
+    accessory: pickAccessory(id),
+  });
+  object3d.name = `npc-${id}`;
   const pausePick = () => 2 + 2 * rnd();
 
   const pos = object3d.position;

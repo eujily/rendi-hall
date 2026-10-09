@@ -134,8 +134,8 @@ export function sampleSilhouette({ seed = 0, samples = 256 } = {}) {
     }
     radii[i] = lo;
   }
-  // Two light [1 2 1] passes round off the petal tips and notch corners a touch.
-  for (let pass = 0; pass < 2; pass++) {
+  // Four light [1 2 1] passes round off the petal tips and notch corners a touch.
+  for (let pass = 0; pass < 4; pass++) {
     const prev = Float64Array.from(radii);
     for (let i = 0; i < samples; i++) {
       radii[i] = (prev[(i - 1 + samples) % samples] + 2 * prev[i] + prev[(i + 1) % samples]) / 4;
