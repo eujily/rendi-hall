@@ -1,6 +1,7 @@
 import './ui/tokens.css';
 import './ui/hud.css';
 import * as THREE from 'three';
+import gsap from 'gsap';
 import { COLORS } from './core/tokens.js';
 import { bus } from './core/events.js';
 import { appState } from './core/appState.js';
@@ -22,13 +23,16 @@ import { createSkipList } from './ui/skipList.js';
 import { createProductView } from './ui/productView.js';
 import content from './content/content.json';
 
+// Tweens follow wall-clock time even when frames are sparse (system-design §4).
+gsap.ticker.lagSmoothing(0);
+
 // ---------- scene ----------
 const canvas = document.querySelector('#scene');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.setSize(window.innerWidth, window.innerHeight, false);
 renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFShadowMap;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(COLORS.lavender);
@@ -93,8 +97,13 @@ const input = createInput(canvas, {
 
 // Point in front of a stand (stands face the camera, +X+Z), inside the "near" radius.
 const frontOf = (s) => ({ x: s.x + 1.9 * Math.SQRT1_2, z: s.z + 1.9 * Math.SQRT1_2 });
+// While a stand is focused Randy stands beside it on the screen-left, never between camera and diorama.
+// front = (1,0,1)/√2, screen-left = (−1,0,1)/√2.
+const besideOf = (s) => ({ x: s.x + (0.6 - 1.7) * Math.SQRT1_2, z: s.z + (0.6 + 1.7) * Math.SQRT1_2 });
+const NPC_HIDE_R = 3.4;
 
 let pendingStand = null;
+let scriptedVel = { x: 0, z: 0 }; // walk animation while Randy is moved by a tween
 
 input.onInteract(() => {
   const cur = standProximity.current;
@@ -119,9 +128,16 @@ async function openStand(id) {
   pendingStand = null;
   input.clearTarget();
   prompt.hide();
-  randy.setVelocity(0, 0);
-  randy.wave();
   const s = standById[id];
+  const spot = besideOf(s);
+  const pos = randy.object3d.position;
+  const dx = spot.x - pos.x, dz = spot.z - pos.z;
+  const dur = reducedMotion() ? 0 : Math.min(0.5, Math.hypot(dx, dz) / PLAYER_SPEED);
+  scriptedVel = dur ? { x: dx / dur, z: dz / dur } : { x: 0, z: 0 };
+  gsap.to(pos, { x: spot.x, z: spot.z, duration: dur, ease: 'none', onComplete: () => {
+    scriptedVel = { x: 0, z: 0 };
+    randy.wave();
+  } });
   const world = new THREE.Vector3(s.x, 0, s.z);
   const origin = rig.toScreen(world.clone().setY(s.def.focusPose.height));
   history.replaceState(null, '', `#/product/${id}`);
@@ -192,13 +208,17 @@ function frame() {
     const next = step(pos, vel, dt, colliders, ROOM);
     pos.x = next.x;
     pos.z = next.z;
+  } else {
+    vel = scriptedVel;
   }
   randy.setVelocity(vel.x, vel.z);
 
   // 3. actors
   randy.update(dt);
+  const focused = appState.focusedId && standById[appState.focusedId];
   npcs.forEach((n, i) => {
     n.update(dt);
+    n.object3d.visible = !focused || Math.hypot(n.position.x - focused.x, n.position.z - focused.z) > NPC_HIDE_R;
     npcTargets[i].x = n.position.x;
     npcTargets[i].z = n.position.z;
   });

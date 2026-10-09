@@ -7,7 +7,7 @@ vi.mock('../src/core/motion.js', () => ({
   reducedMotion: () => globalThis.__reduced !== false, // default instant: deterministic, no GSAP clock
 }));
 
-const { createCameraRig, focusLookTarget, focusZoom, FRAME_H, FOLLOW_INSET } = await import('../src/systems/cameraRig.js');
+const { createCameraRig, focusLookTarget, focusZoom, FRAME_H, FOLLOW_INSET, MOBILE_ANCHOR_Y } = await import('../src/systems/cameraRig.js');
 
 // Independent camera, built the same way the rig does, to check the pure helper against real projection.
 function project(point, look, zoom, vp) {
@@ -46,13 +46,13 @@ describe('focusLookTarget', () => {
     }
   });
 
-  it('mobile (<768): focused point lands at (50% w, 30% h) — 375x812', () => {
+  it('mobile (<768): focused point lands at (50% w, MOBILE_ANCHOR_Y h) — 375x812', () => {
     const vp = { w: 375, h: 812 };
     const zoom = focusZoom(pose.zoom, vp);
     const look = focusLookTarget(point, zoom, vp);
     const s = project(point, look, zoom, vp);
     expect(Math.abs(s.x - 187.5)).toBeLessThan(2);
-    expect(Math.abs(s.y - 812 * 0.3)).toBeLessThan(2);
+    expect(Math.abs(s.y - 812 * MOBILE_ANCHOR_Y)).toBeLessThan(2);
   });
 
   it('mobile zoom is capped so the stand is not clipped, desktop zoom is untouched', () => {
@@ -88,7 +88,7 @@ describe('createCameraRig', () => {
     rig.resize(375, 812);
     s = rig.toScreen(point);
     expect(Math.abs(s.x - 187.5)).toBeLessThan(2);
-    expect(Math.abs(s.y - 812 * 0.3)).toBeLessThan(2);
+    expect(Math.abs(s.y - 812 * MOBILE_ANCHOR_Y)).toBeLessThan(2);
   });
 
   it('release() returns to the followed target at zoom 1', async () => {

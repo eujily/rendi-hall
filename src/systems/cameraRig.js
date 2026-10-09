@@ -9,8 +9,8 @@ export const MOBILE_MAX_W = 768; // viewport width below this uses the "top half
 const FOLLOW_LERP = 0.08; // per 1/60 s
 export const FOLLOW_INSET = 6.5; // follow target stays this far inside ROOM, so the frame never drifts out
 // Stand poses are authored against a 14-unit frame; scale them so framing survives FRAME_H changes.
-const POSE_FRAME_H = 14;
-const MIN_VISIBLE_W = 5; // on narrow screens zoom is capped so at least this many units are visible
+const POSE_FRAME_H = 17;
+const MIN_VISIBLE_W = 6.5; // on narrow screens zoom is capped so at least this many units are visible
 
 // Camera basis (true isometric: looks along −(1,1,1)). Screen-right = (1,0,−1)/√2.
 const DIR = new THREE.Vector3(1, 1, 1).normalize();
@@ -26,9 +26,12 @@ export function viewSize(zoom, vp) {
   return { w: (FRAME_H * (vp.w / vp.h)) / zoom, h: FRAME_H / zoom };
 }
 
-/** Where the focused point must land on screen, in NDC: desktop (25%, 50%), mobile (50%, 30%). */
+// Mobile: the product sheet covers the bottom 60%, so the diorama centres in the free top 40%.
+export const MOBILE_ANCHOR_Y = 0.2;
+
+/** Where the focused point must land on screen, in NDC: desktop (25%, 50%), mobile (50%, MOBILE_ANCHOR_Y). */
 export function focusAnchorNdc(vp) {
-  return isMobile(vp) ? { x: 0, y: 1 - 2 * 0.3 } : { x: 2 * 0.25 - 1, y: 0 };
+  return isMobile(vp) ? { x: 0, y: 1 - 2 * MOBILE_ANCHOR_Y } : { x: 2 * 0.25 - 1, y: 0 };
 }
 
 /** Zoom actually used for a pose: pose zoom, capped on narrow viewports so the diorama is not clipped. */

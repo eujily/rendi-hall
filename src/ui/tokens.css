@@ -19,7 +19,19 @@
   --radius-card: 20px;
   --radius-control: 12px;
   --radius-pill: 999px;
+
+  /* Semantic aliases (no new hues; derived only from the tokens above). */
+  --shadow-hard-sm: 2px 2px 0 var(--black);
+  --shadow-hard: 4px 4px 0 var(--black);
+  --shadow-hard-lg: 6px 6px 0 var(--black);
+  --bubble-randy: var(--purple-link); /* white 700/20px on --purple is 2.9:1, on --purple-link 4.3:1 */
+  --ink-muted: color-mix(in srgb, var(--black) 64%, var(--white));
+  --scrim: color-mix(in srgb, var(--black) 24%, transparent);
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
 }
+
+[hidden] { display: none !important; }
+.sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; overflow: hidden; background: var(--lavender); color: var(--black); font-family: var(--font-body); font-weight: 600; }

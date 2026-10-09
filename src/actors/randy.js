@@ -1,19 +1,17 @@
-// STUB — replaced by agent ② (plan Task 2).
+// Randy — the player's mascot. Movement is driven by main.js (it sets object3d.position);
+// this module only animates the rig from the velocity it is told about.
 import { createBlob } from './blob.js';
 import { COLORS } from '../core/tokens.js';
 
 export function createRandy() {
-  const { object3d, rig } = createBlob({ color: COLORS.mascot });
-  // Billboard-ish: the flat body always faces the isometric camera.
-  object3d.rotation.y = Math.PI / 4;
-  let speed = 0, t = 0;
+  const { object3d, rig } = createBlob({ color: COLORS.mascot, seed: 0, scale: 1 });
+  object3d.name = 'randy';
+  let vx = 0, vz = 0;
   return {
     object3d,
-    setVelocity(vx, vz) { speed = Math.hypot(vx, vz); },
-    wave() {},
-    update(dt) {
-      t += dt;
-      rig.body.position.y = 0.85 + (speed > 0.01 ? Math.abs(Math.sin(t * 10)) * 0.06 : 0);
-    },
+    rig,
+    setVelocity(x, z) { vx = x; vz = z; },
+    wave() { rig.wave(); },
+    update(dt) { rig.update(dt, vx, vz); },
   };
 }

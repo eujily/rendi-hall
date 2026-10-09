@@ -1,17 +1,1057 @@
 {
+  "company": {
+    "name": "Rendi",
+    "manifesto": "Most apps make you guess. We make it click.",
+    "about": "A product studio for apps that explain themselves."
+  },
   "products": [
-    { "id": "learn", "name": "Rendi Learn", "tagline": "Languages, learned in context." },
-    { "id": "pay", "name": "Rendi Pay", "tagline": "Money, in plain words." },
-    { "id": "flow", "name": "Rendi Flow", "tagline": "Interfaces that show the next step." },
-    { "id": "care", "name": "Rendi Care", "tagline": "Habits without the guilt." },
-    { "id": "home", "name": "Rendi Home", "tagline": "One tap per moment." },
-    { "id": "studio", "name": "Rendi Studio", "tagline": "Tasks that explain why." }
+    {
+      "id": "learn",
+      "name": "Rendi Learn",
+      "tagline": "Languages, learned in context.",
+      "accent": "purple",
+      "host": {
+        "name": "Lexi",
+        "color": "purple"
+      },
+      "chat": {
+        "start": "intro",
+        "nodes": {
+          "intro": {
+            "msgs": [
+              {
+                "from": "host",
+                "text": "Hey Randy! I'm Lexi, and I teach languages the way you actually pick them up."
+              },
+              {
+                "from": "host",
+                "text": "Hint: it's not with flashcards."
+              }
+            ],
+            "replies": [
+              {
+                "label": "So how, then?",
+                "to": "what"
+              },
+              {
+                "label": "Teach me something",
+                "to": "how"
+              },
+              {
+                "label": "Join the waitlist →",
+                "action": "waitlist"
+              }
+            ]
+          },
+          "what": {
+            "msgs": [
+              {
+                "from": "host",
+                "text": "Rendi Learn follows your day: standing in a Roman bakery, your phone quietly hands you the three words you need."
+              },
+              {
+                "from": "host",
+                "text": "Real life is the lesson, and we just hold the flashlight."
+              }
+            ],
+            "replies": [
+              {
+                "label": "Show me how",
+                "to": "how"
+              },
+              {
+                "label": "Who's it for?",
+                "to": "who"
+              },
+              {
+                "label": "Sign me up →",
+                "action": "waitlist"
+              }
+            ]
+          },
+          "how": {
+            "msgs": [
+              {
+                "from": "host",
+                "text": "Point the camera at a menu: 'cornetto' lights up, says itself out loud, and sticks."
+              },
+              {
+                "from": "host",
+                "text": "Every word you meet becomes a leaf on your tree, so it grows with you, not at you."
+              }
+            ],
+            "replies": [
+              {
+                "label": "Who's it for?",
+                "to": "who"
+              },
+              {
+                "label": "Why does it work?",
+                "to": "why"
+              },
+              {
+                "label": "I'm in →",
+                "action": "waitlist"
+              }
+            ]
+          },
+          "who": {
+            "msgs": [
+              {
+                "from": "host",
+                "text": "Travellers, expats, and the friend who just booked Lisbon. Anyone tired of 'the pen is on the table'."
+              },
+              {
+                "from": "host",
+                "text": "If you've ever nodded politely at a menu you couldn't read, hi. This is for you."
+              }
+            ],
+            "replies": [
+              {
+                "label": "Why does it work?",
+                "to": "why"
+              },
+              {
+                "label": "Can I try it?",
+                "to": "soon"
+              },
+              {
+                "label": "Join the waitlist →",
+                "action": "waitlist"
+              }
+            ]
+          },
+          "why": {
+            "msgs": [
+              {
+                "from": "host",
+                "text": "Memory loves context. A word you needed beats a word you were told to memorise."
+              },
+              {
+                "from": "host",
+                "text": "We don't make you study. We make it click."
+              }
+            ],
+            "replies": [
+              {
+                "label": "Can I try it?",
+                "to": "soon"
+              },
+              {
+                "label": "Back to the start",
+                "to": "intro"
+              },
+              {
+                "label": "I'm in →",
+                "action": "waitlist"
+              }
+            ]
+          },
+          "soon": {
+            "msgs": [
+              {
+                "from": "host",
+                "text": "Not yet, but the doors open in waves. People on the waitlist walk in first."
+              },
+              {
+                "from": "host",
+                "text": "Pack light. The bakery is waiting."
+              }
+            ],
+            "replies": [
+              {
+                "label": "I'm in →",
+                "action": "waitlist"
+              },
+              {
+                "label": "Tell me more",
+                "to": "what"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "pay",
+      "name": "Rendi Pay",
+      "tagline": "Money, in plain words.",
+      "accent": "yellow",
+      "host": {
+        "name": "Penny",
+        "color": "yellow"
+      },
+      "chat": {
+        "start": "intro",
+        "nodes": {
+          "intro": {
+            "msgs": [
+              {
+                "from": "host",
+                "text": "Hi Randy, I'm Penny. I translate banking into human."
+              },
+              {
+                "from": "host",
+                "text": "For example: you spent a Rome ticket on coffee this month."
+              }
+            ],
+            "replies": [
+              {
+                "label": "Ouch. What is this?",
+                "to": "what"
+              },
+              {
+                "label": "How does it work?",
+                "to": "how"
+              },
+              {
+                "label": "Join the waitlist →",
+                "action": "waitlist"
+              }
+            ]
+          },
+          "what": {
+            "msgs": [
+              {
+                "from": "host",
+                "text": "Rendi Pay is money in plain words: no 'POS DEBIT 5814', just 'Coffee, 14 times, €63'."
+              },
+              {
+                "from": "host",
+                "text": "Every number comes with a sentence that explains it."
+              }
+            ],
+            "replies": [
+              {
+                "label": "Show me how",
+                "to": "how"
+              },
+              {
+                "label": "Who's it for?",
+                "to": "who"
+              },
+              {
+                "label": "I'm in →",
+                "action": "waitlist"
+              }
+            ]
+          },
+          "how": {
+            "msgs": [
+              {
+                "from": "host",
+                "text": "Tap any amount and it tells you what it is, why it's here, and what you could do about it."
+              },
+              {
+                "from": "host",
+                "text": "Like this: 'That subscription renews tomorrow. Keep it, pause it, or let it go?'"
+              }
+            ],
+            "replies": [
+              {
+                "label": "Who's it for?",
+                "to": "who"
+              },
+              {
+                "label": "Why does it work?",
+                "to": "why"
+              },
+              {
+                "label": "Sold. Waitlist me →",
+                "action": "waitlist"
+              }
+            ]
+          },
+          "who": {
+            "msgs": [
+              {
+                "from": "host",
+                "text": "Anyone who has opened a banking app and felt mildly accused."
+              },
+              {
+                "from": "host",
+                "text": "Freelancers, first-jobbers, couples splitting rent. Humans, basically."
+              }
+            ],
+            "replies": [
+              {
+                "label": "Why does it work?",
+                "to": "why"
+              },
+              {
+                "label": "Can I try it?",
+                "to": "soon"
+              },
+              {
+                "label": "Join the waitlist →",
+                "action": "waitlist"
+              }
+            ]
+          },
+          "why": {
+            "msgs": [
+              {
+                "from": "host",
+                "text": "Nobody budgets from a spreadsheet they're scared of."
+              },
+              {
+                "from": "host",
+                "text": "Clear words, calm money. You can't fix what you can't read."
+              }
+            ],
+            "replies": [
+              {
+                "label": "Can I try it?",
+                "to": "soon"
+              },
+              {
+                "label": "Back to the start",
+                "to": "intro"
+              },
+              {
+                "label": "Sold. Waitlist me →",
+                "action": "waitlist"
+              }
+            ]
+          },
+          "soon": {
+            "msgs": [
+              {
+                "from": "host",
+                "text": "Not yet, but we're opening the vault in waves. Waitlist people go first."
+              },
+              {
+                "from": "host",
+                "text": "Bring coffee. We'll tell you exactly what it costs."
+              }
+            ],
+            "replies": [
+              {
+                "label": "Sold. Waitlist me →",
+                "action": "waitlist"
+              },
+              {
+                "label": "Tell me more",
+                "to": "what"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "flow",
+      "name": "Rendi Flow",
+      "tagline": "Interfaces that show the next step.",
+      "accent": "black",
+      "host": {
+        "name": "Nudge",
+        "color": "white"
+      },
+      "chat": {
+        "start": "intro",
+        "nodes": {
+          "intro": {
+            "msgs": [
+              {
+                "from": "host",
+                "text": "Psst, Randy. I'm Nudge, and I live inside apps pointing at the next thing to tap."
+              },
+              {
+                "from": "host",
+                "text": "Think tour guide, minus the lanyard."
+              }
+            ],
+            "replies": [
+              {
+                "label": "What do you do?",
+                "to": "what"
+              },
+              {
+                "label": "Show me",
+                "to": "how"
+              },
+              {
+                "label": "Join the waitlist →",
+                "action": "waitlist"
+              }
+            ]
+          },
+          "what": {
+            "msgs": [
+              {
+                "from": "host",
+                "text": "Rendi Flow is an onboarding SDK. Drop it in and the interface itself shows people the next step."
+              },
+              {
+                "from": "host",
+                "text": "No tooltip walls, no 'skip tour', just one clear nudge at a time."
+              }
+            ],
+            "replies": [
+              {
+                "label": "Show me how",
+                "to": "how"
+              },
+              {
+                "label": "Who's it for?",
+                "to": "who"
+              },
+              {
+                "label": "I'm in →",
+                "action": "waitlist"
+              }
+            ]
+          },
+          "how": {
+            "msgs": [
+              {
+                "from": "host",
+                "text": "It watches where people hesitate and highlights exactly one next action."
+              },
+              {
+                "from": "host",
+                "text": "Setup takes an afternoon, not a quarter."
+              }
+            ],
+            "replies": [
+              {
+                "label": "Who's it for?",
+                "to": "who"
+              },
+              {
+                "label": "Why does it work?",
+                "to": "why"
+              },
+              {
+                "label": "Nudge me in →",
+                "action": "waitlist"
+              }
+            ]
+          },
+          "who": {
+            "msgs": [
+              {
+                "from": "host",
+                "text": "Product teams watching users vanish before their first win."
+              },
+              {
+                "from": "host",
+                "text": "Designers, PMs, and the founder still writing tooltip copy at 2 a.m."
+              }
+            ],
+            "replies": [
+              {
+                "label": "Why does it work?",
+                "to": "why"
+              },
+              {
+                "label": "Can I try it?",
+                "to": "soon"
+              },
+              {
+                "label": "Join the waitlist →",
+                "action": "waitlist"
+              }
+            ]
+          },
+          "why": {
+            "msgs": [
+              {
+                "from": "host",
+                "text": "A guided tour is a confession that the interface didn't explain itself."
+              },
+              {
+                "from": "host",
+                "text": "We fix the interface, and the tour retires."
+              }
+            ],
+            "replies": [
+              {
+                "label": "Can I try it?",
+                "to": "soon"
+              },
+              {
+                "label": "Back to the start",
+                "to": "intro"
+              },
+              {
+                "label": "Nudge me in →",
+                "action": "waitlist"
+              }
+            ]
+          },
+          "soon": {
+            "msgs": [
+              {
+                "from": "host",
+                "text": "Not yet, but the SDK opens to teams in waves. Waitlist first, tooltips never."
+              },
+              {
+                "from": "host",
+                "text": "We'll ping you, gently. It's kind of our thing."
+              }
+            ],
+            "replies": [
+              {
+                "label": "Nudge me in →",
+                "action": "waitlist"
+              },
+              {
+                "label": "Tell me more",
+                "to": "what"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "care",
+      "name": "Rendi Care",
+      "tagline": "Habits without the guilt.",
+      "accent": "red",
+      "host": {
+        "name": "Poppy",
+        "color": "red"
+      },
+      "chat": {
+        "start": "intro",
+        "nodes": {
+          "intro": {
+            "msgs": [
+              {
+                "from": "host",
+                "text": "Hi Randy, I'm Poppy! Did you see my plant grow a leaf when you walked up?"
+              },
+              {
+                "from": "host",
+                "text": "That is us: habits that celebrate you showing up."
+              }
+            ],
+            "replies": [
+              {
+                "label": "A plant that grows?",
+                "to": "what"
+              },
+              {
+                "label": "What is Rendi Care?",
+                "to": "how"
+              },
+              {
+                "label": "Join the waitlist →",
+                "action": "waitlist"
+              }
+            ]
+          },
+          "what": {
+            "msgs": [
+              {
+                "from": "host",
+                "text": "Rendi Care builds habits without the guilt trip. Miss a day and your plant simply waits for you."
+              },
+              {
+                "from": "host",
+                "text": "No broken streaks, no red badges of shame."
+              }
+            ],
+            "replies": [
+              {
+                "label": "Show me how",
+                "to": "how"
+              },
+              {
+                "label": "Who's it for?",
+                "to": "who"
+              },
+              {
+                "label": "I'm in →",
+                "action": "waitlist"
+              }
+            ]
+          },
+          "how": {
+            "msgs": [
+              {
+                "from": "host",
+                "text": "Pick something small: water, stretching, ten quiet minutes."
+              },
+              {
+                "from": "host",
+                "text": "Each time you show up, something grows. Skip a day and nothing wilts, because it's a plant, not a debt collector."
+              }
+            ],
+            "replies": [
+              {
+                "label": "Who's it for?",
+                "to": "who"
+              },
+              {
+                "label": "Why does it work?",
+                "to": "why"
+              },
+              {
+                "label": "Grow with me →",
+                "action": "waitlist"
+              }
+            ]
+          },
+          "who": {
+            "msgs": [
+              {
+                "from": "host",
+                "text": "People who've quit five habit apps and blamed themselves every time."
+              },
+              {
+                "from": "host",
+                "text": "Spoiler: it was never you. It was the guilt."
+              }
+            ],
+            "replies": [
+              {
+                "label": "Why does it work?",
+                "to": "why"
+              },
+              {
+                "label": "Can I try it?",
+                "to": "soon"
+              },
+              {
+                "label": "Join the waitlist →",
+                "action": "waitlist"
+              }
+            ]
+          },
+          "why": {
+            "msgs": [
+              {
+                "from": "host",
+                "text": "Shame is a terrible coach, and gentle repetition wins."
+              },
+              {
+                "from": "host",
+                "text": "We make the next small thing feel easy, and the rest follows."
+              }
+            ],
+            "replies": [
+              {
+                "label": "Can I try it?",
+                "to": "soon"
+              },
+              {
+                "label": "Back to the start",
+                "to": "intro"
+              },
+              {
+                "label": "Grow with me →",
+                "action": "waitlist"
+              }
+            ]
+          },
+          "soon": {
+            "msgs": [
+              {
+                "from": "host",
+                "text": "Not yet, but we plant new spots in waves. Waitlist people get the first seeds."
+              },
+              {
+                "from": "host",
+                "text": "Water yourself in the meantime. Seriously."
+              }
+            ],
+            "replies": [
+              {
+                "label": "Grow with me →",
+                "action": "waitlist"
+              },
+              {
+                "label": "Tell me more",
+                "to": "what"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "home",
+      "name": "Rendi Home",
+      "tagline": "One tap per moment.",
+      "accent": "lavender",
+      "host": {
+        "name": "Nook",
+        "color": "lavender"
+      },
+      "chat": {
+        "start": "intro",
+        "nodes": {
+          "intro": {
+            "msgs": [
+              {
+                "from": "host",
+                "text": "Hey Randy, welcome in. I'm Nook, and I keep this place cosy."
+              },
+              {
+                "from": "host",
+                "text": "Want to see a house that understands 'movie night'?"
+              }
+            ],
+            "replies": [
+              {
+                "label": "Movie night?",
+                "to": "what"
+              },
+              {
+                "label": "What is Rendi Home?",
+                "to": "how"
+              },
+              {
+                "label": "Join the waitlist →",
+                "action": "waitlist"
+              }
+            ]
+          },
+          "what": {
+            "msgs": [
+              {
+                "from": "host",
+                "text": "Rendi Home turns a dozen smart-home apps into one tap per moment."
+              },
+              {
+                "from": "host",
+                "text": "'Movie night' dims the lights, closes the blinds and hushes your phone. One button, one mood."
+              }
+            ],
+            "replies": [
+              {
+                "label": "Show me how",
+                "to": "how"
+              },
+              {
+                "label": "Who's it for?",
+                "to": "who"
+              },
+              {
+                "label": "I'm in →",
+                "action": "waitlist"
+              }
+            ]
+          },
+          "how": {
+            "msgs": [
+              {
+                "from": "host",
+                "text": "You describe a moment in plain words, and we wire up the lamps, locks and thermostats."
+              },
+              {
+                "from": "host",
+                "text": "Every button says what it will do before you press it. No mystery toggles."
+              }
+            ],
+            "replies": [
+              {
+                "label": "Who's it for?",
+                "to": "who"
+              },
+              {
+                "label": "Why does it work?",
+                "to": "why"
+              },
+              {
+                "label": "Let me in →",
+                "action": "waitlist"
+              }
+            ]
+          },
+          "who": {
+            "msgs": [
+              {
+                "from": "host",
+                "text": "Families, renters, and anyone with five smart bulbs and three apps."
+              },
+              {
+                "from": "host",
+                "text": "If you've ever asked a lamp why it won't listen, welcome home."
+              }
+            ],
+            "replies": [
+              {
+                "label": "Why does it work?",
+                "to": "why"
+              },
+              {
+                "label": "Can I try it?",
+                "to": "soon"
+              },
+              {
+                "label": "Join the waitlist →",
+                "action": "waitlist"
+              }
+            ]
+          },
+          "why": {
+            "msgs": [
+              {
+                "from": "host",
+                "text": "A smart home should feel like a good host, not a control room."
+              },
+              {
+                "from": "host",
+                "text": "One tap per moment. The rest is just furniture."
+              }
+            ],
+            "replies": [
+              {
+                "label": "Can I try it?",
+                "to": "soon"
+              },
+              {
+                "label": "Back to the start",
+                "to": "intro"
+              },
+              {
+                "label": "Let me in →",
+                "action": "waitlist"
+              }
+            ]
+          },
+          "soon": {
+            "msgs": [
+              {
+                "from": "host",
+                "text": "Not yet, but the front door opens in waves. Waitlist people get the keys first."
+              },
+              {
+                "from": "host",
+                "text": "Kettle is already on, for what it is worth."
+              }
+            ],
+            "replies": [
+              {
+                "label": "Let me in →",
+                "action": "waitlist"
+              },
+              {
+                "label": "Tell me more",
+                "to": "what"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "studio",
+      "name": "Rendi Studio",
+      "tagline": "Tasks that explain why.",
+      "accent": "yellow",
+      "host": {
+        "name": "Sticky",
+        "color": "yellow"
+      },
+      "chat": {
+        "start": "intro",
+        "nodes": {
+          "intro": {
+            "msgs": [
+              {
+                "from": "host",
+                "text": "Hi Randy! I'm Sticky, basically a post-it with opinions."
+              },
+              {
+                "from": "host",
+                "text": "Ask me why any task exists. Go on."
+              }
+            ],
+            "replies": [
+              {
+                "label": "Why does it exist?",
+                "to": "what"
+              },
+              {
+                "label": "What is Rendi Studio?",
+                "to": "how"
+              },
+              {
+                "label": "Join the waitlist →",
+                "action": "waitlist"
+              }
+            ]
+          },
+          "what": {
+            "msgs": [
+              {
+                "from": "host",
+                "text": "Rendi Studio is a team board where every task explains why it exists."
+              },
+              {
+                "from": "host",
+                "text": "Each card carries its goal, its owner, and what happens if it slips."
+              }
+            ],
+            "replies": [
+              {
+                "label": "Show me how",
+                "to": "how"
+              },
+              {
+                "label": "Who's it for?",
+                "to": "who"
+              },
+              {
+                "label": "I'm in →",
+                "action": "waitlist"
+              }
+            ]
+          },
+          "how": {
+            "msgs": [
+              {
+                "from": "host",
+                "text": "Write a task, add one line of 'because', and the board shows how it ties to the bigger goal."
+              },
+              {
+                "from": "host",
+                "text": "Anyone can open a card and get it without a meeting. Meetings hate this trick."
+              }
+            ],
+            "replies": [
+              {
+                "label": "Who's it for?",
+                "to": "who"
+              },
+              {
+                "label": "Why does it work?",
+                "to": "why"
+              },
+              {
+                "label": "Save me a desk →",
+                "action": "waitlist"
+              }
+            ]
+          },
+          "who": {
+            "msgs": [
+              {
+                "from": "host",
+                "text": "Teams drowning in tickets nobody remembers creating."
+              },
+              {
+                "from": "host",
+                "text": "Designers, devs, PMs, and that one person who asks 'wait, why are we doing this?'"
+              }
+            ],
+            "replies": [
+              {
+                "label": "Why does it work?",
+                "to": "why"
+              },
+              {
+                "label": "Can I try it?",
+                "to": "soon"
+              },
+              {
+                "label": "Join the waitlist →",
+                "action": "waitlist"
+              }
+            ]
+          },
+          "why": {
+            "msgs": [
+              {
+                "from": "host",
+                "text": "Work without a reason is just busywork with a due date."
+              },
+              {
+                "from": "host",
+                "text": "Know the why, and priorities sort themselves out."
+              }
+            ],
+            "replies": [
+              {
+                "label": "Can I try it?",
+                "to": "soon"
+              },
+              {
+                "label": "Back to the start",
+                "to": "intro"
+              },
+              {
+                "label": "Save me a desk →",
+                "action": "waitlist"
+              }
+            ]
+          },
+          "soon": {
+            "msgs": [
+              {
+                "from": "host",
+                "text": "Not yet, but the studio opens in waves. Waitlist people get the first desks."
+              },
+              {
+                "from": "host",
+                "text": "We'll save you a sticky. Yellow, obviously."
+              }
+            ],
+            "replies": [
+              {
+                "label": "Save me a desk →",
+                "action": "waitlist"
+              },
+              {
+                "label": "Tell me more",
+                "to": "what"
+              }
+            ]
+          }
+        }
+      }
+    }
   ],
   "npcs": [
-    { "id": "v1", "line": "Have you tried the Pay stand? Finally a bank that talks like a human." },
-    { "id": "v2", "line": "The plant at Care grew when I walked up. I'm emotional." },
-    { "id": "v3", "line": "Waitlist is in the middle. Don't tell anyone I told you." }
+    {
+      "id": "v1",
+      "color": "yellow",
+      "line": "The Pay stand just told me what my coffee habit costs. In words. I needed that."
+    },
+    {
+      "id": "v2",
+      "color": "red",
+      "line": "The plant at Care grew when I walked up. I'm emotional."
+    },
+    {
+      "id": "v3",
+      "color": "white",
+      "line": "Waitlist is in the middle. Don't tell anyone I told you."
+    }
   ],
-  "waitlist": { "title": "Join the waitlist", "body": "Be first when Rendi apps go live.", "cta": "Join the waitlist →", "thanks": "Thanks! We'll make it click for you." },
-  "ui": { "loading": "Making it click…", "skip": "Skip the walk" }
+  "waitlist": {
+    "eyebrow": "Early access",
+    "title": "Join the waitlist",
+    "body": "Be first through the door when Rendi apps go live. One email, zero guessing.",
+    "label": "Email",
+    "placeholder": "you@example.com",
+    "cta": "Join the waitlist →",
+    "invalid": "Hmm, that doesn't look like an email. Mind a second look?",
+    "thanks": "Thanks! We'll make it click for you."
+  },
+  "ui": {
+    "loading": "Making it click…",
+    "skip": "Skip the walk",
+    "skipTitle": "Where to?",
+    "hintKeys": "Arrow keys or click to walk, Enter to open a stand, Escape to go back",
+    "legend": {
+      "move": "Walk",
+      "or": "or",
+      "click": "click",
+      "open": "Open",
+      "close": "Back"
+    },
+    "hostedBy": "Hosted by",
+    "close": "Close",
+    "back": "Back to the hall",
+    "replies": "Quick replies",
+    "typing": "is typing",
+    "chatWith": "Chat with"
+  }
 }

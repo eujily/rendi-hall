@@ -90,13 +90,14 @@ export function toonMesh(geometry, color, { outline = 0.05, cast = true, receive
 export function setupLights(scene) {
   const ambient = new THREE.AmbientLight(COLORS.white, AMBIENT * Math.PI);
   const sun = new THREE.DirectionalLight(COLORS.white, SUN * Math.PI);
-  // From upper-right of the screen → shadows fall down-left, like the mascot's offset shadow.
-  sun.position.set(6, 16, -4);
+  // Front-right of the camera: faces toward the viewer stay in the lit step (brand colours read true);
+  // the grounded "drop shadow" look comes from the flat decals under characters.
+  sun.position.set(10, 16, 3);
   sun.castShadow = true;
-  sun.shadow.mapSize.set(2048, 2048);
+  sun.shadow.mapSize.set(4096, 4096);
   sun.shadow.radius = 1;
   sun.shadow.bias = -0.0008;
-  sun.shadow.normalBias = 0.02;
+  sun.shadow.normalBias = 0.035;
   const s = sun.shadow.camera;
   s.left = -16; s.right = 16; s.top = 16; s.bottom = -16; s.near = 1; s.far = 50;
   scene.add(ambient, sun, sun.target);

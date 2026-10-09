@@ -42,7 +42,8 @@ export function createPedestal({ label, accent }) {
   base.rotation.y = Math.PI / 8;
 
   const rim = toonMesh(new THREE.CylinderGeometry(PEDESTAL_R * 1.02, PEDESTAL_R * 1.02, 0.08, 8), accent, { outline: 0.03 });
-  rim.position.y = PEDESTAL_H - 0.04;
+  // Top of the rim sits 1 cm under the base top: coplanar caps z-fight (very visible with a black accent).
+  rim.position.y = PEDESTAL_H - 0.05;
   rim.rotation.y = Math.PI / 8;
 
   const plate = toonMesh(new THREE.BoxGeometry(1.5, 0.38, 0.06), COLORS.white, { outline: 0.03, cast: false });
