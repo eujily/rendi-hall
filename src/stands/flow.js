@@ -1,11 +1,13 @@
-// Rendi Flow — a giant white mouse cursor clicking a yellow pill button (the apprendi.io CTA).
+// Rendi Flow — a diorama on a lavender desk: a giant white mouse cursor clicking a yellow pill button (the apprendi.io CTA).
+// Props: a "Click!" tooltip bubble that pops with each click, a progress bar that fills click by click,
+// two little purple UI cards at the back (floating gently).
 // idle: cursor hovers · near: it moves in, clicks, the button presses and a 3-line "click" burst pops
 // · focused: same, plus a little purple tick appearing above the button after each click.
+// Box: |x| <= ~1.55, |z| <= ~0.8, top y ~ 2.15 (cursor at rest).
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { toonMesh, flatMaterial } from '../kit/toon.js';
-import { COLORS } from '../core/tokens.js';
-import { createPedestal, PEDESTAL_H } from './_pedestal.js';
+import { COLORS, mix } from '../core/tokens.js';
 
 const css = (c) => `#${c.toString(16).padStart(6, '0')}`;
 const damp = (dt, k) => 1 - Math.exp(-dt * k);
@@ -14,14 +16,20 @@ const smooth = (x) => (x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x));
 const elasticOut = (p) =>
   p <= 0 ? 0 : p >= 1 ? 1 : 2 ** (-10 * p) * Math.sin(((p * 10 - 0.75) * 2 * Math.PI) / 3) + 1;
 
-const LEAN = -0.3; // plates lean back toward the camera
-const BUTTON_POS = new THREE.Vector3(-0.12, 0, 0.12);
+const SLAB_H = 0.12;
+const LEAN = -0.3; // plates lean back from the camera
+const S = 1.25; // button scale
+const BUTTON_POS = new THREE.Vector3(-0.3, 0, -0.1);
 const BUTTON_W = 1.0;
 const BUTTON_D = 0.5;
 const BUTTON_H = 0.14; // extrude depth; bevel adds 2 × 0.04
 const PRESS = 0.4; // how much the button squashes
-const HOVER = new THREE.Vector3(0.4, 0.95, 0.2); // cursor tip at rest
+const HOVER = new THREE.Vector3(0.4, 0.95, 0.15); // cursor tip at rest
 const CLICK_MARKS = [110, 150, 190]; // degrees around the tip, fanning away from the cursor body
+const BAR_W = 1.8;
+const BAR_Z = 0.5;
+const BAR_STEPS = 5;
+const BUBBLE_POS = new THREE.Vector3(-0.95, 1.75, -0.1);
 
 function pillShape(w, d) {
   const r = d / 2;
@@ -83,9 +91,15 @@ function labelTexture(text) {
   return tex;
 }
 
+function buildSlab() {
+  const geo = new THREE.BoxGeometry(3.2, SLAB_H, 1.5).translate(0, SLAB_H / 2, 0);
+  return toonMesh(geo, mix(COLORS.lavender, COLORS.purple, 0.25), { outline: 0.03, receive: true });
+}
+
 function buildButton() {
   const group = new THREE.Group();
   group.position.copy(BUTTON_POS);
+  group.scale.setScalar(S);
 
   const geo = new THREE.ExtrudeGeometry(pillShape(BUTTON_W, BUTTON_D), {
     depth: BUTTON_H,
@@ -118,7 +132,7 @@ function buildButton() {
   socket.castShadow = false;
 
   group.add(pill, socket);
-  return { group, pill, top };
+  return { group, pill, top: top * S };
 }
 
 function buildCursor() {
@@ -170,14 +184,80 @@ function buildTick() {
   return group;
 }
 
+// white speech bubble (pill + tail) with a "Click!" label; pops with each click
+function buildBubble() {
+  const group = new THREE.Group();
+  group.position.copy(BUBBLE_POS);
+  const opts = { depth: 0.06, bevelEnabled: true, bevelThickness: 0.015, bevelSize: 0.015, bevelSegments: 2 };
+  const pill = new THREE.ExtrudeGeometry(pillShape(0.9, 0.38), opts).translate(0, 0, -0.03);
+  const tail = new THREE.Shape();
+  tail.moveTo(0.1, -0.16);
+  tail.lineTo(0.34, -0.16);
+  tail.lineTo(0.3, -0.38);
+  tail.closePath();
+  const tailGeo = new THREE.ExtrudeGeometry(tail, opts).translate(0, 0, -0.03);
+  const body = toonMesh(mergeGeometries([pill, tailGeo]), COLORS.white, { outline: 0.03, cast: false });
+  const label = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.62, 0.31),
+    new THREE.MeshBasicMaterial({ map: labelTexture('Click!'), transparent: true }),
+  );
+  label.position.z = 0.08;
+  group.add(body, label);
+  return group;
+}
+
+// progress bar lying across the front of the desk: white track + purple fill (scaled from its left end)
+function buildProgress() {
+  const group = new THREE.Group();
+  group.position.set(0, SLAB_H, BAR_Z);
+  const track = toonMesh(new THREE.BoxGeometry(BAR_W, 0.1, 0.13).translate(0, 0.05, 0), COLORS.white, {
+    outline: 0.025,
+    cast: false,
+  });
+  const fillGeo = new THREE.BoxGeometry(BAR_W - 0.08, 0.075, 0.15).translate((BAR_W - 0.08) / 2, 0.05, 0.005);
+  const fill = toonMesh(fillGeo, COLORS.purple, { outline: 0, cast: false });
+  fill.position.x = -(BAR_W - 0.08) / 2;
+  fill.scale.x = 0.001;
+  group.add(track, fill);
+  return { group, fill };
+}
+
+// two purple "app window" cards at the back, with raised dots + bars (same colour, merged → black outline relief)
+function buildCards() {
+  const m = new THREE.Matrix4();
+  const parts = [];
+  const card = (x, z, yaw, w, h) => {
+    const bits = [
+      new THREE.BoxGeometry(w, h, 0.07).translate(0, h / 2, 0),
+      new THREE.BoxGeometry(0.06, 0.06, 0.05).translate(-w / 2 + 0.12, h - 0.1, 0.05),
+      new THREE.BoxGeometry(0.06, 0.06, 0.05).translate(-w / 2 + 0.24, h - 0.1, 0.05),
+      new THREE.BoxGeometry(w * 0.7, 0.07, 0.05).translate(0, h * 0.55, 0.05),
+      new THREE.BoxGeometry(w * 0.5, 0.07, 0.05).translate(-w * 0.1, h * 0.38, 0.05),
+      new THREE.BoxGeometry(w * 0.6, 0.07, 0.05).translate(-w * 0.05, h * 0.21, 0.05),
+    ];
+    m.makeTranslation(x, 0, z).multiply(new THREE.Matrix4().makeRotationY(yaw));
+    for (const b of bits) parts.push(b.applyMatrix4(m));
+  };
+  card(-1.15, -0.2, 0.3, 0.7, 0.95);
+  card(1.2, -0.22, -0.3, 0.56, 0.72);
+  const mesh = toonMesh(mergeGeometries(parts), COLORS.purple, { outline: 0.025 });
+  const group = new THREE.Group();
+  group.add(mesh);
+  return group;
+}
+
 let dio = null;
 let cursor = null;
 let button = null;
 let marks = null;
 let tick = null;
+let bubble = null;
+let progress = null;
+let cards = null;
 let energy = 0;
 let focusE = 0;
 let phase = 0;
+let clicks = 0;
 
 const tipCycle = new THREE.Vector3();
 const ready = new THREE.Vector3();
@@ -185,20 +265,29 @@ const ready = new THREE.Vector3();
 export default {
   id: 'flow',
   build() {
-    const root = new THREE.Group();
-    root.add(createPedestal({ label: 'Rendi Flow', accent: COLORS.black }));
+    energy = 0;
+    focusE = 0;
+    phase = 0;
+    clicks = 0;
 
-    dio = new THREE.Group();
-    dio.position.y = PEDESTAL_H;
+    const root = new THREE.Group();
+    root.add(buildSlab());
+
+    dio = new THREE.Group(); // swayed ±15° when focused; sits on the desk
+    dio.position.y = SLAB_H;
     root.add(dio);
 
     button = buildButton();
     cursor = buildCursor();
     marks = buildClickMarks();
     tick = buildTick();
+    bubble = buildBubble();
+    progress = buildProgress();
+    progress.group.position.y = 0; // dio is already on the desk
+    cards = buildCards();
     cursor.position.copy(HOVER);
     tick.position.set(BUTTON_POS.x, 0.75, BUTTON_POS.z + 0.1);
-    dio.add(button.group, cursor, marks, tick);
+    dio.add(cards, button.group, progress.group, bubble, cursor, marks, tick);
     return root;
   },
   update(t, dt, state) {
@@ -207,7 +296,9 @@ export default {
     focusE += ((state === 'focused' ? 1 : 0) - focusE) * damp(dt, 3);
 
     const period = lerp(2.6, 2.1, focusE);
-    phase = (phase + dt / period) % 1;
+    const next = phase + dt / period;
+    if (next >= 1) clicks++;
+    phase = next % 1;
     const u = phase;
 
     // --- click cycle (tip position + press amount + marks) ---
@@ -261,7 +352,24 @@ export default {
     tick.scale.setScalar(tickScale * focusE);
     tick.position.y = button.top + 0.5 + Math.max(0, v) * 0.25;
 
+    // tooltip bubble: bobs, and bounces on each click
+    const bounce = m > 0 && m < 1 ? Math.sin(m * Math.PI) : 0;
+    const bs = 1 + 0.18 * bounce * energy;
+    bubble.scale.setScalar(bs);
+    bubble.position.y = BUBBLE_POS.y + Math.sin(t * 1.6) * 0.04;
+    bubble.rotation.z = Math.sin(t * 1.1) * 0.03;
+
+    // progress bar: one step per click while someone is near, a resting 1/5 otherwise
+    const done = (clicks % BAR_STEPS) + (u > 0.42 ? 1 : 0);
+    const target = lerp(1, done, energy) / BAR_STEPS;
+    const fx = progress.fill.scale.x;
+    progress.fill.scale.x = Math.max(0.001, fx + (target - fx) * damp(dt, done === 0 ? 14 : 8));
+
+    // UI cards float gently
+    cards.position.y = Math.sin(t * 1.2) * 0.012 + 0.012;
+    cards.rotation.y = Math.sin(t * 0.7) * 0.02;
+
     dio.rotation.y = Math.sin(t * 0.45) * (Math.PI / 12) * focusE;
   },
-  focusPose: { height: 1.4, zoom: 3.0 },
+  focusPose: { height: 1.2, zoom: 3.2 },
 };
