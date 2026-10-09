@@ -3,6 +3,9 @@
 An interactive isometric product hall for **Rendi** — *Most apps make you guess. We make it click.*
 Walk Randy between exhibition stands; step up to one and the camera glides into the diorama while the product tells its story in a chat.
 
+![The hall](docs/screens/hall.jpg)
+![A product opened](docs/screens/care-focus.jpg)
+
 > Concept prototype for a pitch. Products and copy are placeholders; there is no backend.
 
 ## Controls
