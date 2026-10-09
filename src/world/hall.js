@@ -22,7 +22,7 @@ const LEAF_LIGHT = COLORS.sage;
 const RACK = mix(COLORS.purple, COLORS.black, 0.6);
 const RACK_UNIT = mix(RACK, COLORS.white, 0.2);
 const WAINSCOT = mix(COLORS.purple, COLORS.lavender, 0.3);
-const FLOOR = mix(COLORS.lavender, COLORS.white, 0.06);
+const FLOOR = mix(COLORS.lavender, COLORS.white, 0.3);
 const BRASS = COLORS.yellow;
 const hex = (c) => `#${c.toString(16).padStart(6, '0')}`;
 
@@ -45,12 +45,14 @@ const rnd = (n) => {
 
 // key -> { kind, color, outline, geos }. Flat colours and textured kinds both merge per bucket.
 const buckets = new Map();
+const archBuckets = new Map(); // the exit arch gets its own meshes so it can fade out in close-ups
+let target = buckets;
 function bucketFor(key, entry) {
-  if (!buckets.has(key)) buckets.set(key, { ...entry, geos: [] });
-  return buckets.get(key);
+  if (!target.has(key)) target.set(key, { ...entry, geos: [] });
+  return target.get(key);
 }
 /** Flat brand colour. Geometry must already be in its final (world) position. */
-function add(color, geo, outline = color === COLORS.black ? 0 : OUTLINE) {
+function add(color, geo, outline = color === COLORS.black || color === COLORS.lavender ? 0 : OUTLINE) {
   bucketFor(`flat|${color}`, { kind: null, color, outline }).geos.push(geo);
   return geo;
 }
@@ -60,6 +62,24 @@ function addTex(kind, base, geo, unitsPerRepeat = 1.6, outline = OUTLINE) {
   bucketFor(`${kind}|${base}`, { kind, color: base, outline }).geos.push(geo);
   return geo;
 }
+// Hand-painted look: the kit's 32px tiles, but filtered smoothly (mipmaps + linear) instead of nearest.
+const smoothCache = new Map();
+function smoothToon(kind, base) {
+  const key = `${kind}|${base}`;
+  if (!smoothCache.has(key)) {
+    const src = texturedToon(kind, base);
+    const map = src.map.clone();
+    map.generateMipmaps = true;
+    map.minFilter = THREE.LinearMipmapLinearFilter;
+    map.magFilter = THREE.LinearFilter;
+    map.anisotropy = 8;
+    map.needsUpdate = true;
+    const mat = src.clone();
+    mat.map = map;
+    smoothCache.set(key, mat);
+  }
+  return smoothCache.get(key);
+}
 function prep(g, keepUv) {
   const out = g.index ? g.toNonIndexed() : g;
   for (const name of Object.keys(out.attributes)) {
@@ -68,17 +88,17 @@ function prep(g, keepUv) {
   }
   return out;
 }
-function flushBuckets(group, name = 'decor') {
-  for (const [key, b] of buckets) {
+function flushBuckets(group, map = buckets, name = 'decor') {
+  for (const [key, b] of map) {
     const merged = mergeGeometries(b.geos.map((g) => prep(g, !!b.kind)), false);
-    const mesh = new THREE.Mesh(merged, b.kind ? texturedToon(b.kind, b.color) : toonMaterial(b.color));
-    mesh.castShadow = !(b.kind === 'floorHerringbone');
+    const mesh = new THREE.Mesh(merged, b.kind ? smoothToon(b.kind, b.color) : toonMaterial(b.color));
+    mesh.castShadow = b.kind !== 'floorHerringbone';
     mesh.receiveShadow = true;
     if (b.outline) addOutline(mesh, b.outline);
     mesh.name = `${name}-${key.replace('|', '-')}`;
     group.add(mesh);
   }
-  buckets.clear();
+  map.clear();
 }
 
 const box = (w, h, d) => new THREE.BoxGeometry(w, h, d);
@@ -244,7 +264,7 @@ function buildBench(x, z, ry) {
 function buildServerRack(x, z, ledsA, ledsB) {
   const P = matrix([x, 0, z]);
   const put = (color, geo) => add(color, geo.applyMatrix4(P));
-  const metal = (base, geo, u = 1.3) => addTex('metal', base, geo.applyMatrix4(P), u);
+  const metal = (base, geo, u = 1.3) => addTex('metal', base, geo.applyMatrix4(P), u, base === RACK_UNIT ? 0 : OUTLINE);
   metal(RACK, xf(box(1.3, 2.5, 0.9), [0, 1.25, 0]));
   put(COLORS.black, xf(box(1.36, 0.08, 0.96), [0, 0.04, 0]));
   for (let k = 0; k < 6; k++) {
@@ -514,7 +534,10 @@ function buildExit(group) {
   mat.name = 'exit-mat-text';
   group.add(mat);
 
-  // arch: U-shaped bevelled slab (pillars + half-round head), facing +Z
+  // arch: U-shaped bevelled slab (pillars + half-round head), facing +Z. Own meshes (see archBuckets).
+  const archGroup = new THREE.Group();
+  archGroup.name = 'exit-arch';
+  target = archBuckets;
   const PZ = z + 0.1, PX = 1.55, RIN = PX - 0.17, ROUT = PX + 0.17, PH = 1.75, DEP = 0.34;
   const s = new THREE.Shape();
   s.moveTo(-ROUT, 0);
@@ -547,7 +570,7 @@ function buildExit(group) {
   add(COLORS.white, xf(box(BW + 0.08, 0.04, 0.1), [x, BY + BH / 2 + 0.02, PZ]));
   add(COLORS.white, xf(box(BW + 0.08, 0.04, 0.1), [x, BY - BH / 2 - 0.02, PZ]));
   for (const sx of [-0.55, 0.55]) add(COLORS.black, xf(box(0.025, 0.55, 0.025), [x + sx, BY + BH / 2 + 0.3, PZ]));
-  const board = (flip) => {
+  const board = (into) => {
     const m = canvasPlane(BW - 0.1, BH - 0.08, 600, 192, (ctx, w, h) => {
       ctx.fillStyle = hex(LEAF_LIGHT);
       ctx.fillRect(0, 0, w, h);
@@ -566,9 +589,12 @@ function buildExit(group) {
     }, { transparent: false });
     m.position.set(x, BY, PZ + 0.045);
     m.name = 'exit-sign-text';
-    group.add(m);
+    into.add(m);
   };
-  board();
+  board(archGroup);
+  flushBuckets(archGroup, archBuckets, 'arch');
+  target = buckets;
+  group.add(archGroup);
 
   // light spill on the floor, from the doorway into the room
   const spill = canvasPlane(5.6, 3.4, 448, 272, (ctx, w, h) => {
@@ -589,6 +615,12 @@ function buildExit(group) {
   spill.geometry.rotateX(-Math.PI / 2);
   spill.position.set(x, 0.1, z + 0.2 - 1.7);
   spill.name = 'exit-spill';
+  // Close-up cameras (product views) look along the floor through the doorway: fade the arch out then.
+  const _d = new THREE.Vector3();
+  spill.onBeforeRender = (renderer, scene, camera) => {
+    camera.getWorldDirection(_d);
+    archGroup.visible = _d.y < -0.4;
+  };
   group.add(spill);
 }
 
@@ -632,7 +664,7 @@ export function createHall() {
   const D = ROOM.maxZ - ROOM.minZ;
 
   // Floor: one slab, hand-painted herringbone parquet
-  addTex('floorHerringbone', FLOOR, xf(box(W, 0.3, D), [0, -0.15, 0]), 2, OUTLINE);
+  addTex('floorHerringbone', FLOOR, xf(box(W, 0.3, D), [0, -0.15, 0]), 2.8, OUTLINE);
 
   // Walls: wallpaper above a woodVertical wainscot (back wall z = minZ, left wall x = minX)
   for (const wall of ['back', 'left']) {
@@ -713,7 +745,6 @@ export function createHall() {
     colliders.push({ type: 'box', minX: Math.min(x0, x1), maxX: Math.max(x0, x1), minZ: Math.min(z0, z1), maxZ: Math.max(z0, z1) });
 
     // two short rope runs flanking the opening; the 1.5 radius around the spot stays clear
-    const sp = exhibitSpot(e);
     for (const side of [-1, 1]) {
       const pa = lw(e, side * 1.75, FRAME.depth + 0.4);
       const pb = lw(e, side * 2.45, FRAME.depth + 0.4);
@@ -725,7 +756,6 @@ export function createHall() {
         colliders.push({ x: p.x, z: p.z, r: 0.16 });
       }
       buildRope(pa, pb);
-      console.assert(Math.hypot(pa.x - sp.x, pa.z - sp.z) > 1.6);
     }
   }
 

@@ -17,7 +17,7 @@ const LINING = mix(COLORS.lavender, COLORS.white, 0.3);
 const LINE = mix(COLORS.lavender, COLORS.black, 0.06);
 const DOT = mix(COLORS.lavender, COLORS.black, 0.12);
 const INK = mix(COLORS.lavender, COLORS.black, 0.45); // muted text / placeholder tone
-const BEAM = mix(COLORS.yellow, COLORS.white, 0.55);
+const BEAM = mix(COLORS.yellow, COLORS.white, 0.35);
 
 const box = (w, h, d, x, y, z, rx = 0) => {
   const g = new THREE.BoxGeometry(w, h, d);
@@ -443,19 +443,19 @@ function beamGeometry(lampY, lampZ, lean, R) {
     const t = y / lampY; // 1 at the lamp, 0 at the floor
     cp.setZ(i, cp.getZ(i) + lampZ + (1 - t) * lean);
     cp.setY(i, y + 0.0);
-    cc.set([base.r, base.g, base.b, 0.025 + 0.2 * t * t], i * 4);
+    cc.set([base.r, base.g, base.b, 0.01 + 0.15 * t * t], i * 4);
   }
   cone.setAttribute('color', new THREE.BufferAttribute(cc, 4));
   const pool = new THREE.CircleGeometry(R * 1.05, 32);
   pool.deleteAttribute('uv');
   pool.deleteAttribute('normal');
   pool.rotateX(-Math.PI / 2);
-  pool.translate(0, 0.012, lampZ + lean);
+  pool.translate(0, 0.045, lampZ + lean);
   const pp = pool.getAttribute('position');
   const pc = new Float32Array(pp.count * 4);
   for (let i = 0; i < pp.count; i++) {
     const r = Math.hypot(pp.getX(i), pp.getZ(i) - (lampZ + lean)) / (R * 1.05);
-    pc.set([base.r, base.g, base.b, 0.2 * (1 - r) ** 1.2], i * 4);
+    pc.set([base.r, base.g, base.b, 0.1 * (1 - r) ** 1.5], i * 4);
   }
   pool.setAttribute('color', new THREE.BufferAttribute(pc, 4));
   return mergeGeometries([cone, pool], false);
