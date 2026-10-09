@@ -46,6 +46,12 @@ function bodyGeometry(shell) {
   for (const [x, z] of [[-0.065, -0.07], [0.065, -0.07], [-0.06, 0.04], [0.06, 0.04]]) {
     parts.push(paint(sph(0.03), COLORS.black, M(x, 0.175, z, 1, 0.5, 1)));
   }
+  // shell shine: a long soft glint + a dot on the upper-left, a faint one on the right shoulder
+  parts.push(paint(sph(1), COLORS.white, M(-0.062, 0.188, -0.003, 0.014, 0.005, 0.055, 0, 0, 0.4)));
+  parts.push(paint(sph(1), COLORS.white, M(-0.05, 0.178, 0.072, 0.009, 0.004, 0.012, 0, 0, 0.35)));
+  parts.push(paint(sph(1), COLORS.white, M(0.07, 0.18, -0.07, 0.01, 0.004, 0.022, 0, 0, -0.5)));
+  // wing-case rim line (dark band where the shell meets the body)
+  parts.push(paint(new THREE.TorusGeometry(0.128, 0.006, 6, 24), COLORS.black, M(0, 0.078, 0.0, 1, 1.25, 1, Math.PI / 2, 0, 0)));
   // head
   parts.push(paint(sph(0.075), COLORS.black, M(0, 0.1, 0.17)));
   // googly eyes (white + pupil)
@@ -63,12 +69,25 @@ function bodyGeometry(shell) {
   return g;
 }
 
+// Six jointed legs: coxa → bent femur (knee up and out) → tibia down to a tiny foot.
 function legsGeometry() {
   const parts = [];
+  const UP = new THREE.Vector3(0, 1, 0);
+  const seg = (a, b, r) => {
+    const d = new THREE.Vector3().subVectors(b, a);
+    const len = d.length();
+    const g = new THREE.CylinderGeometry(r, r * 0.8, len, 6);
+    const q = new THREE.Quaternion().setFromUnitVectors(UP, d.normalize());
+    return paint(g, COLORS.black, new THREE.Matrix4().compose(a.clone().add(b).multiplyScalar(0.5), q, new THREE.Vector3(1, 1, 1)));
+  };
   for (const s of [-1, 1]) {
-    for (const z of [-0.09, 0.0, 0.09]) {
-      const sw = z * 3; // front legs sweep forward, back legs backward
-      parts.push(paint(new THREE.BoxGeometry(0.15, 0.014, 0.014), COLORS.black, M(s * 0.16, 0.06, z, 1, 1, 1, 0, s * sw * 0.5, -s * 0.35)));
+    for (const [z, sweep] of [[-0.09, -0.07], [0.0, 0.0], [0.09, 0.08]]) {
+      const hip = new THREE.Vector3(s * 0.1, 0.07, z);
+      const knee = new THREE.Vector3(s * 0.2, 0.14, z + sweep * 0.5);
+      const foot = new THREE.Vector3(s * 0.25, 0.0, z + sweep);
+      parts.push(seg(hip, knee, 0.0085), seg(knee, foot, 0.007));
+      parts.push(paint(new THREE.SphereGeometry(0.0105, 7, 5), COLORS.black, M(knee.x, knee.y, knee.z)));
+      parts.push(paint(new THREE.SphereGeometry(0.009, 7, 5), COLORS.black, M(foot.x, foot.y + 0.003, foot.z, 1, 0.7, 1.4)));
     }
   }
   const g = mergeGeometries(parts);
@@ -159,7 +178,7 @@ export function createBug({ variant = 0 } = {}) {
       // tangent heading
       body.rotation.y = Math.atan2(-Math.sin(a) * dir, Math.cos(a) * dir);
       body.rotation.z = Math.sin(t * 14 + phase) * 0.05 * wob;
-      legs.rotation.y = Math.sin(t * 22 + phase) * 0.18 * wob;
+      legs.rotation.y = Math.sin(t * 22 + phase) * 0.14 * wob;
       legs.scale.x = 1 + Math.sin(t * 22 + phase) * 0.06 * wob;
       // glitchy marker
       const bob = Math.sin(t * 3 + phase) * 0.06 * wob;

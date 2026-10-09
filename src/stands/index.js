@@ -22,7 +22,7 @@ const META = {
 };
 
 export function buildStands() {
-  return EXHIBITS.map((e) => {
+  return EXHIBITS.map((e, i) => {
     const { id } = e;
     const meta = META[id] ?? { label: `Rendi ${id}`, accent: COLORS.purple, url: `rendi.app/${id}` };
     let def = DEFS[id];
@@ -34,7 +34,7 @@ export function buildStands() {
       def = stubStand(id);
       diorama = def.build();
     }
-    const { root, mount } = createExhibitFrame(meta);
+    const { root, mount } = createExhibitFrame({ ...meta, index: i + 1 });
     mount.add(diorama);
     const object3d = new THREE.Group();
     object3d.add(root);

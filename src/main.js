@@ -2,7 +2,6 @@ import './ui/tokens.css';
 import './ui/hud.css';
 import * as THREE from 'three';
 import gsap from 'gsap';
-import { COLORS } from './core/tokens.js';
 import { bus } from './core/events.js';
 import { appState } from './core/appState.js';
 import {
@@ -12,6 +11,8 @@ import {
 } from './core/layout.js';
 import { DUR, reducedMotion } from './core/motion.js';
 import { setupLights } from './kit/toon.js';
+import { createPost } from './kit/post.js';
+import { createAtmosphere } from './kit/atmosphere.js';
 import { createHall } from './world/hall.js';
 import { createTown } from './world/town.js';
 import { createRandy } from './actors/randy.js';
@@ -43,11 +44,11 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFShadowMap;
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(COLORS.lavender);
-const { sun } = setupLights(scene);
-const SUN_OFFSET = sun.position.clone();
+const { followShadow } = setupLights(scene);
 
 const rig = createCameraRig();
+const atmosphere = createAtmosphere(scene, rig.camera);
+const post = createPost(renderer, scene, rig.camera);
 const toScreen = (v) => rig.toScreen(v);
 
 // ---------- zones ----------
@@ -160,6 +161,7 @@ function enterZone(id, at) {
   hunt.setZone(id);
   minimap.setZone(id);
   appState.zone = id;
+  atmosphere.setZone(id);
 }
 
 // ---------- UI ----------
@@ -381,8 +383,8 @@ function frame() {
   // 6. camera (+ the sun's shadow box follows the view)
   rig.update(dt);
   const look = rig.getLook();
-  sun.target.position.copy(look);
-  sun.position.copy(look).add(SUN_OFFSET);
+  followShadow(look);
+  atmosphere.update(elapsed, dt, look);
 
   // 7. screen anchors
   const cur = proximity.current;
@@ -400,12 +402,13 @@ function frame() {
   minimap.update(pos, { npcs: zone.npcs.map((n) => n.position), bugs: hunt.live(zone.id) });
 
   // 8. render
-  renderer.render(scene, rig.camera);
+  post.render();
 }
 
 function resize() {
   renderer.setSize(window.innerWidth, window.innerHeight, false);
   rig.resize(window.innerWidth, window.innerHeight);
+  post.setSize(window.innerWidth, window.innerHeight);
 }
 window.addEventListener('resize', resize);
 
@@ -420,4 +423,4 @@ fontsReady.then(() => wait(0.4)).then(() => {
   if (deep && spotById[deep]) teleportAndOpen(deep);
 });
 
-if (import.meta.env.DEV) Object.assign(window, { __rendi: { scene, renderer, rig, appState, randy, stands, zones, enterZone, travel, openSpot } });
+if (import.meta.env.DEV) Object.assign(window, { __rendi: { THREE, scene, renderer, rig, appState, randy, stands, zones, enterZone, travel, openSpot } });

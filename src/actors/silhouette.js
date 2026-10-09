@@ -110,7 +110,7 @@ function variedShapes(seed) {
  *   points — CCW outline in body units: height normalised to 1, centred on the bbox centre, y up.
  *   frame  — maps SVG coords to body units: x = (sx - cx) / h, y = -(sy - cy) / h.
  */
-export function sampleSilhouette({ seed = 0, samples = 160 } = {}) {
+export function sampleSilhouette({ seed = 0, samples = 256 } = {}) {
   const { ellipses, lenses } = variedShapes(seed);
   const inside = (x, y) => ellipses.some((e) => pointInEllipse(x, y, e)) || lenses.some((l) => pointInPolygon(x, y, l));
 
@@ -118,14 +118,33 @@ export function sampleSilhouette({ seed = 0, samples = 160 } = {}) {
   const ox = ellipses.reduce((s, e) => s + e.cx, 0) / ellipses.length;
   const oy = ellipses.reduce((s, e) => s + e.cy, 0) / ellipses.length;
 
-  const raw = [];
-  const R_MAX = 90, STEP = 0.2;
+  // Radial scan: coarse step to find the furthest inside sample, then bisection for a sub-pixel
+  // exact edge (no quantisation noise → smooth curves once the polygon is extruded).
+  const radii = new Float64Array(samples);
+  const R_MAX = 90, STEP = 0.5;
   for (let i = 0; i < samples; i++) {
     const a = (i / samples) * Math.PI * 2;
     const ca = Math.cos(a), sa = Math.sin(a);
     let last = 0;
     for (let r = 0; r <= R_MAX; r += STEP) if (inside(ox + r * ca, oy + r * sa)) last = r;
-    raw.push([ox + last * ca, oy + last * sa]);
+    let lo = last, hi = last + STEP;
+    for (let k = 0; k < 14; k++) {
+      const mid = (lo + hi) / 2;
+      if (inside(ox + mid * ca, oy + mid * sa)) lo = mid; else hi = mid;
+    }
+    radii[i] = lo;
+  }
+  // Four light [1 2 1] passes round off the petal tips and notch corners a touch.
+  for (let pass = 0; pass < 4; pass++) {
+    const prev = Float64Array.from(radii);
+    for (let i = 0; i < samples; i++) {
+      radii[i] = (prev[(i - 1 + samples) % samples] + 2 * prev[i] + prev[(i + 1) % samples]) / 4;
+    }
+  }
+  const raw = [];
+  for (let i = 0; i < samples; i++) {
+    const a = (i / samples) * Math.PI * 2;
+    raw.push([ox + radii[i] * Math.cos(a), oy + radii[i] * Math.sin(a)]);
   }
 
   let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
