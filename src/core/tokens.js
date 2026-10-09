@@ -14,13 +14,16 @@ const base = {
   black: 0x000000,
   white: 0xffffff,
   mascot: 0xcba6f4, // Randy body fill from randy-body.svg
+  // Orchestrator decision 09.10: the brand has no green; plants need one for the cosy mood.
+  // Pastel sage at the same lightness as the brand pastels.
+  sage: 0xa9c79a,
 };
 
 export const COLORS = {
   ...base,
   shadow: mix(base.lavender, base.black, 0.1), // mascot shadow = black @ 10% over lavender
-  floorA: mix(base.lavender, base.black, 0.04),
-  floorB: mix(base.lavender, base.white, 0.35),
+  floorA: mix(base.lavender, base.black, 0.025),
+  floorB: mix(base.lavender, base.white, 0.18),
   wall: mix(base.lavender, base.white, 0.55),
   wallTrim: base.mascot,
   wood: mix(base.yellow, base.black, 0.28),

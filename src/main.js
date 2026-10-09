@@ -109,6 +109,7 @@ input.onStandClick((id) => {
   pendingStand = id;
   input.setTarget(frontOf(standById[id]));
 });
+input.onFloorClick(() => { pendingStand = null; });
 
 // ---------- open / close (docs/system-design.md §5) ----------
 const wait = (s) => new Promise((r) => setTimeout(r, s * 1000));
