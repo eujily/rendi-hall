@@ -273,6 +273,10 @@ export function createBugHunt({ scene, toScreen }) {
     get count() {
       return { fixed: fixedCount, total };
     },
+    /** World positions of unfixed bugs in a zone (for the minimap). */
+    live(z = zone) {
+      return entries.filter((e) => e.zone === z && !e.fixed).map((e) => ({ x: e.x, z: e.z }));
+    },
     dispose() {
       counter.remove();
       layer.remove();

@@ -28,6 +28,7 @@ import { createBubbles } from './ui/bubble.js';
 import { createSkipList } from './ui/skipList.js';
 import { createProductView } from './ui/productView.js';
 import { createTransition } from './ui/transition.js';
+import { createMinimap } from './ui/minimap.js';
 import content from './content/content.json';
 
 // Tweens follow wall-clock time even when frames are sparse (system-design §4).
@@ -157,6 +158,7 @@ function enterZone(id, at) {
   rig.follow(randy.object3d);
   rig.snapTo(randy.object3d);
   hunt.setZone(id);
+  minimap.setZone(id);
   appState.zone = id;
 }
 
@@ -166,6 +168,13 @@ const prompt = createPrompt();
 const bubbles = createBubbles();
 const transition = createTransition();
 const hunt = createBugHunt({ scene, toScreen });
+const minimap = createMinimap({
+  onPick: (p) => {
+    if (!appState.is('EXPLORE')) return;
+    pendingSpot = null;
+    input.setTarget(p);
+  },
+});
 const skipList = createSkipList(
   [
     {
@@ -243,6 +252,7 @@ async function openSpot(id) {
     scriptedVel = { x: 0, z: 0 };
     randy.wave();
   } });
+  if (spot.zone === 'town') minimap.markVisited(spot.id === 'waitlist' ? 'post' : spot.id);
   const origin = rig.toScreen(spot.focusPoint);
   history.replaceState(null, '', `#/${spot.zone === 'hall' ? 'product' : 'place'}/${id}`);
 
@@ -270,6 +280,7 @@ async function travel(to, at) {
   transition.setCaption(to === 'hall' ? content.ui.entering : content.ui.leaving);
   await transition.cover();
   enterZone(to, at);
+  if (to === 'hall') minimap.markVisited('products');
   await transition.reveal();
   appState.request('zone:entered');
 }
@@ -385,6 +396,8 @@ function frame() {
     const p = rig.toScreen(tmp.set(n.position.x, 2.1, n.position.z));
     bubbles.setPosition(n.id, p.x, p.y);
   });
+
+  minimap.update(pos, { npcs: zone.npcs.map((n) => n.position), bugs: hunt.live(zone.id) });
 
   // 8. render
   renderer.render(scene, rig.camera);
