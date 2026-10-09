@@ -81,7 +81,7 @@ export const TOWN_VILLAGERS = [
   { id: 't1', color: 'yellow', waypoints: [{ x: -6, z: 5 }, { x: -8, z: 0 }, { x: -4, z: -2 }] },
   { id: 't2', color: 'red', waypoints: [{ x: 6, z: 5 }, { x: 8, z: 0 }, { x: 4, z: -3 }] },
   { id: 't3', color: 'white', waypoints: [{ x: -3, z: 9 }, { x: 4, z: 9 }, { x: 5, z: 13 }] },
-  { id: 't4', color: 'purple', waypoints: [{ x: 16, z: 2 }, { x: 18, z: 12 }, { x: 15, z: 14 }] },
+  { id: 't4', color: 'white', waypoints: [{ x: 16, z: 2 }, { x: 18, z: 12 }, { x: 15, z: 14 }] },
 ];
 
 // Bug Hunt: collectible bugs (zone + local x/z). Walk into one to fix it.

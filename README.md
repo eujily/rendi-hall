@@ -1,7 +1,9 @@
 # Rendi Hall
 
-An interactive isometric product hall for **Rendi** — *Most apps make you guess. We make it click.*
-Walk Randy between exhibition stands; step up to one and the camera glides into the diorama while the product tells its story in a chat.
+An interactive isometric town for **Rendi** — *Most apps make you guess. We make it click.*
+Walk Randy around a cozy Stardew-style town: About, How we work, News and the Post office (waitlist) each open a chat.
+Step through the door under the **PRODUCTS** sign into an IT museum where every product is an app-window vitrine on the wall.
+Bonus: catch all 8 bugs crawling around to ship v1.0 🚀 (a minimap in the corner helps).
 
 ![The hall](docs/screens/hall.jpg)
 ![A product opened](docs/screens/care-focus.jpg)
@@ -14,17 +16,21 @@ Walk Randy between exhibition stands; step up to one and the camera glides into 
 |---|---|
 | Arrows / WASD | walk |
 | Click / tap the floor | walk there |
-| Click a stand | walk to it and open |
-| Enter / Space / E | open the nearest stand |
+| Click a vitrine | walk to it and open |
+| Click the minimap | walk there (town) |
+| Walk into the PRODUCTS door / the ← Town mat | switch between town and hall |
+| Enter / Space / E | open the nearest place or vitrine |
 | Esc | close |
 | **Skip the walk** | jump straight to any product |
 
-Deep links: `#/product/learn` · `pay` · `flow` · `care` · `home` · `studio` · `waitlist`.
+Deep links: `#/product/learn` · `pay` · `flow` · `care` · `home` · `studio` · `#/place/about` · `how` · `news` · `waitlist`.
 
 ## Run locally
 
+Safe to run: no backend, no network calls, install scripts disabled, dev server bound to localhost — see [SECURITY.md](SECURITY.md).
+
 ```bash
-npm install
+npm ci
 npm run dev
 ```
 

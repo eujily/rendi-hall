@@ -40,7 +40,7 @@ const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.setSize(window.innerWidth, window.innerHeight, false);
 renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.shadowMap.type = THREE.PCFShadowMap;
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(COLORS.lavender);
@@ -114,7 +114,7 @@ stands.forEach((s) => {
     zone: 'hall',
     id: s.id,
     focusPoint: new THREE.Vector3(c.x, c.y, c.z),
-    pose: { ...s.def.focusPose, height: 0, dir: new THREE.Vector3(n.x, 0.18, n.z).normalize() },
+    pose: { ...s.def.focusPose, zoom: 2.3, height: 0, dir: new THREE.Vector3(n.x, 0.18, n.z).normalize() },
     // Randy waits beside the vitrine, out of the frontal view.
     beside: { x: s.x - n.z * 2.6 + n.x * -0.6, z: s.z + n.x * 2.6 + n.z * -0.6 },
     front: { x: s.x, z: s.z },
@@ -129,7 +129,7 @@ PLACES.forEach((p) => {
     zone: 'town',
     id: p.chat,
     focusPoint: new THREE.Vector3(door.x, 1.6, door.z),
-    pose: { height: 0, zoom: 1.9 },
+    pose: { height: 0, zoom: 1.45 },
     beside: { x: front.x - 1.4, z: front.z + 0.6 },
     front,
     name: placeName(p.chat),

@@ -1,17 +1,16 @@
 // NPC visitors: same species as Randy, brand colours, slightly different petals (seed).
 // They walk their waypoints in a loop at 1.6 u/s, pause 2–4 s at each point and turn to
-// look at the nearest stand while they wait.
+// look at the nearest look-at point while they wait.
 import { createBlob } from './blob.js';
 import { COLORS } from '../core/tokens.js';
-import { STANDS } from '../core/layout.js';
 import { mulberry32 } from './silhouette.js';
 
 const SPEED = 1.6;
 const ARRIVE = 0.08;
 
-function nearestStand(x, z) {
+function nearestPoint(points, x, z) {
   let best = null, bestD = Infinity;
-  for (const s of STANDS) {
+  for (const s of points) {
     const d = (s.x - x) ** 2 + (s.z - z) ** 2;
     if (d < bestD) { bestD = d; best = s; }
   }
@@ -19,10 +18,10 @@ function nearestStand(x, z) {
 }
 
 /**
- * @param {{ id: string, color: 'yellow'|'red'|'white', waypoints: {x:number,z:number}[] }} opts
+ * @param {{ id: string, color: 'yellow'|'red'|'white'|'purple', waypoints: {x:number,z:number}[], lookAt?: {x:number,z:number}[] }} opts
  */
-export function createNpc({ id, color, waypoints }) {
-  const { object3d, rig } = createBlob({ color: COLORS[color] ?? COLORS.mascot, seed: id, scale: 0.9 });
+export function createNpc({ id, color, waypoints, lookAt = [] }) {
+  const { object3d, rig } = createBlob({ color: color === 'purple' ? COLORS.purple : (COLORS[color] ?? COLORS.mascot), seed: id, scale: 0.9 });
   object3d.name = `npc-${id}`;
   const rnd = mulberry32([...id].reduce((h, c) => h * 31 + c.charCodeAt(0), 7));
   const pausePick = () => 2 + 2 * rnd();
@@ -36,7 +35,7 @@ export function createNpc({ id, color, waypoints }) {
   const startPause = () => {
     pause = pausePick();
     vx = vz = 0;
-    const s = nearestStand(pos.x, pos.z);
+    const s = nearestPoint(lookAt, pos.x, pos.z);
     if (s) rig.lookAtWorld(s.x, s.z);
   };
 
