@@ -38,6 +38,10 @@ npm run dev
 
 ## Deploy
 
+**Vercel (repo stays private):** vercel.com → Add New Project → import `eujily/rendi-hall` → Deploy. Settings come from `vercel.json` (Vite build, `dist`, security headers). Every push to `main` redeploys.
+
+**GitHub Pages** (needs a public repo or a paid plan):
+
 Push to `main` on GitHub, then in **Settings → Pages** set *Source* to **GitHub Actions**. The workflow in `.github/workflows/pages.yml` tests, builds and publishes. The build uses a relative base, so any repo name works.
 
 ## How it's built
