@@ -16,7 +16,7 @@ const OUT = 0.028; // one hull thickness for every static bucket
 const W = COLORS;
 export const PAL = {
   grass: mix(W.sage, W.white, 0.26),
-  grassDark: mix(W.sage, W.black, 0.05),
+  grassDark: mix(mix(W.sage, W.white, 0.1), W.black, 0.02),
   grassLight: mix(mix(W.sage, W.yellow, 0.28), W.white, 0.3),
   dirt: mix(mix(W.yellow, W.wood, 0.4), W.lavender, 0.38),
   cobble: mix(W.lavender, W.yellow, 0.3),
@@ -311,6 +311,17 @@ function butterflyGeo() {
   return mergeColored(parts);
 }
 
+/** UVs for round pieces (cylinders / lathes): u runs round the circumference at world scale, v up; caps stay planar */
+function radialUV(g, upr, y0 = 0) {
+  const pos = g.getAttribute('position'), nor = g.getAttribute('normal'), uv = g.getAttribute('uv');
+  for (let i = 0; i < pos.count; i++) {
+    const x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
+    if (Math.abs(nor.getY(i)) > 0.95) uv.setXY(i, x / upr, z / upr);
+    else uv.setXY(i, (uv.getX(i) * Math.PI * 2 * Math.max(Math.hypot(x, z), 0.001)) / upr, (y + y0) / upr);
+  }
+  return g;
+}
+
 // ---------------------------------------------------------------- instanced mesh plumbing
 const outlineMats = new Map();
 function outlineMat(t) {
@@ -384,6 +395,17 @@ export function createProps(ctx) {
     surfaceUV(geo, upr);
     geo.applyMatrix4(CUR);
     return put(`t|${kind}|${base}|${o ? 1 : 0}`, { type: 't', kind, base, o: o ? OUT : 0 }, geo);
+  };
+  /** textured piece whose UVs are already set (radialUV) */
+  const TP = (kind, base, geo, o = OUT) => {
+    geo.applyMatrix4(CUR);
+    return put(`t|${kind}|${base}|${o ? 1 : 0}`, { type: 't', kind, base, o: o ? OUT : 0 }, geo);
+  };
+  /** textured upright cylinder with circumference UVs, centred at (x,y,z) */
+  const rcy = (kind, base, rt, rb, h, x, y, z, upr = 1.5, seg = 12, o = OUT) => {
+    const g = new THREE.CylinderGeometry(rt, rb, h, seg);
+    radialUV(g, upr, y);
+    return TP(kind, base, xf(g, [x, y, z]), o);
   };
   /** textured ground piece: world UV, no hull, no shadow cast */
   const G = (kind, base, geo, upr) => {
@@ -545,14 +567,14 @@ export function createProps(ctx) {
     const dr = new THREE.RingGeometry(2.1, 2.3, 48).rotateX(-Math.PI / 2).translate(x, 0.156, z);
     F(W.yellow, dr, 0);
     // basin: stone wall (textured), clean rim, water
-    T('stoneWall', PAL.stoneWall, xf(cyl(1.78, 1.88, 0.3, 40), [x, 0.29, z]), 1.5);
-    T('stoneWall', PAL.stoneWall, xf(new THREE.TorusGeometry(1.72, 0.16, 8, 44).rotateX(Math.PI / 2), [x, 0.5, z]), 1.5);
+    rcy('stoneWall', PAL.stoneWall, 1.78, 1.88, 0.3, x, 0.29, z, 1.5, 40);
+    F(W.wall, xf(new THREE.TorusGeometry(1.72, 0.16, 8, 44).rotateX(Math.PI / 2), [x, 0.5, z]));
     // pedestal + two bowls + finial
-    T('stoneWall', PAL.stoneWall, xf(cyl(0.32, 0.46, 0.75, 16), [x, 0.82, z]), 1.5);
-    T('stoneWall', PAL.stoneWall, xf(cyl(0.82, 0.38, 0.26, 24), [x, 1.14, z]), 1.5);
-    T('stoneWall', PAL.stoneWall, xf(new THREE.TorusGeometry(0.82, 0.07, 6, 28).rotateX(Math.PI / 2), [x, 1.27, z]), 1.5);
-    T('stoneWall', PAL.stoneWall, xf(cyl(0.13, 0.17, 0.42, 10), [x, 1.47, z]), 1.5);
-    T('stoneWall', PAL.stoneWall, xf(cyl(0.36, 0.15, 0.14, 16), [x, 1.66, z]), 1.5);
+    rcy('stoneWall', PAL.stoneWall, 0.32, 0.46, 0.75, x, 0.82, z, 1.5, 16);
+    rcy('stoneWall', PAL.stoneWall, 0.82, 0.38, 0.26, x, 1.14, z, 1.5, 24);
+    F(W.wall, xf(new THREE.TorusGeometry(0.82, 0.07, 6, 28).rotateX(Math.PI / 2), [x, 1.27, z]));
+    rcy('stoneWall', PAL.stoneWall, 0.13, 0.17, 0.42, x, 1.47, z, 1.5, 10);
+    rcy('stoneWall', PAL.stoneWall, 0.36, 0.15, 0.14, x, 1.66, z, 1.5, 16);
     // water discs (animated, merged with the pond below)
     waterGeos.push(xf(new THREE.CircleGeometry(1.62, 40).rotateX(-Math.PI / 2), [x, 0.5, z]));
     waterGeos.push(xf(new THREE.CircleGeometry(0.76, 28).rotateX(-Math.PI / 2), [x, 1.285, z]));
@@ -562,8 +584,8 @@ export function createProps(ctx) {
     [0.785, 2.356, 3.927, 5.498].forEach((a, i) => {
       const px = x + Math.cos(a) * 3.55, pz = z + Math.sin(a) * 3.55;
       at([px, 0.14, pz], a, () => {
-        T('stoneWall', PAL.stoneWall, xf(cyl(0.34, 0.4, 0.34, 10), [0, 0.17, 0]), 1.5);
-        T('stoneWall', PAL.stoneWall, xf(new THREE.TorusGeometry(0.35, 0.06, 6, 14).rotateX(Math.PI / 2), [0, 0.34, 0]), 1.5);
+        rcy('stoneWall', PAL.stoneWall, 0.34, 0.4, 0.34, 0, 0.17, 0, 1.5, 10);
+        F(W.wall, xf(new THREE.TorusGeometry(0.35, 0.06, 6, 14).rotateX(Math.PI / 2), [0, 0.34, 0]));
       });
       bushes.push({ x: px, y: 0.4, z: pz, s: 0.5, ry: i, color: 1 });
       flower(px + 0.1, pz, 700 + i, 1.2, i % 4);
@@ -600,9 +622,9 @@ export function createProps(ctx) {
     at([x + rx + 0.3, 0, z - 0.2], 0, () => {
       for (let i = 0; i < 9; i++) T('woodPlanks', PAL.wood, bx(0.27, 0.07, 1.25, -i * 0.3 + 0.15, 0.2, 0), [2.0, 0.5], 0.026);
       for (const sz of [-0.5, 0.5]) T('woodPlanks', PAL.wood, bx(2.8, 0.1, 0.1, -1.2, 0.12, sz), [1.5, 0.4]);
-      for (const px of [0.1, -1.1, -2.3]) for (const sz of [-0.62, 0.62]) T('logs', PAL.bark, cy(0.075, 0.08, 0.55, px, 0.17, sz, [0, 0, 0], 8), 1.2);
+      for (const px of [0.1, -1.1, -2.3]) for (const sz of [-0.62, 0.62]) rcy('logs', PAL.bark, 0.075, 0.08, 0.55, px, 0.17, sz, 1.2, 8);
       // coiled rope + a lantern post at the tip
-      T('logs', PAL.bark, cy(0.07, 0.08, 0.9, -2.4, 0.5, 0.6, [0, 0, 0], 8), 1.2);
+      rcy('logs', PAL.bark, 0.07, 0.08, 0.9, -2.4, 0.5, 0.6, 1.2, 8);
       BAS(PAL.glow, bx(0.16, 0.2, 0.16, -2.4, 1.03, 0.6));
       F(W.black, bx(0.24, 0.05, 0.24, -2.4, 1.16, 0.6), 0);
       F(W.black, bx(0.24, 0.05, 0.24, -2.4, 0.92, 0.6), 0);
@@ -616,9 +638,9 @@ export function createProps(ctx) {
   // ================================================================= WELL, SIGNPOST
   const wellOk = solid(-9.2, 5.4, 0.95, () => {
     at([-9.2, 0, 5.4], 0.3, () => {
-      T('stoneWall', PAL.stoneWall, cy(0.78, 0.84, 0.78, 0, 0.39, 0, [0, 0, 0], 14), 1.4);
+      rcy('stoneWall', PAL.stoneWall, 0.78, 0.84, 0.78, 0, 0.39, 0, 1.4, 14);
       F(W.black, xf(new THREE.CircleGeometry(0.62, 14).rotateX(-Math.PI / 2), [0, 0.7, 0]), 0);
-      T('stoneWall', PAL.stoneWall, xf(new THREE.TorusGeometry(0.72, 0.07, 6, 18).rotateX(Math.PI / 2), [0, 0.78, 0]), 1.5);
+      F(W.wall, xf(new THREE.TorusGeometry(0.72, 0.07, 6, 18).rotateX(Math.PI / 2), [0, 0.78, 0]));
       for (const sx of [-0.8, 0.8]) T('woodVertical', PAL.wood, bx(0.13, 1.7, 0.13, sx, 0.85 + 0.45, 0), 1.5);
       T('logs', PAL.bark, cy(0.07, 0.07, 1.7, 0, 1.55, 0, [0, 0, Math.PI / 2], 8), 1.2);
       // roof: two shingle slabs + ridge
@@ -721,7 +743,7 @@ export function createProps(ctx) {
     for (const d of [-0.8, 0, 0.8]) circle(x + Math.cos(ry) * d, z - Math.sin(ry) * d, 0.5);
   };
   [[3.9, 5.2], [-3.9, 5.2], [3.9, -1.3], [-3.9, -1.3]].forEach(([x, z]) => benchSolid(x, z, toPlaza(x, z)));
-  benchSolid(POND.x + 3.9, POND.z + 0.9, -Math.PI / 2);
+  benchSolid(POND.x - 0.6, POND.z + 2.75, Math.PI);
 
   // ================================================================= BARRELS, CRATES, WOODPILE
   const barrelProfile = [[0.0, 0], [0.3, 0], [0.34, 0.1], [0.38, 0.3], [0.395, 0.4], [0.38, 0.5], [0.34, 0.7], [0.3, 0.8], [0.0, 0.8]];
@@ -735,7 +757,8 @@ export function createProps(ctx) {
   const barrel = (x, z, s = 1) => {
     at([x, 0, z], rnd(x * 3.1 + z) * 6, () => {
       const g = new THREE.LatheGeometry(barrelProfile.map(([r, y]) => new THREE.Vector2(r * s, y * s)), 14);
-      T('woodVertical', PAL.wood, g, 1.3);
+      radialUV(g, 1.3);
+      TP('woodVertical', PAL.wood, g);
       for (const y of [0.16, 0.34, 0.5, 0.66]) {
         if (y === 0.34 || y === 0.5) continue;
         F(W.black, cy(radiusAt(y) * s + 0.012, radiusAt(y) * s + 0.012, 0.06 * s, 0, y * s, 0, [0, 0, 0], 14), 0);
@@ -765,7 +788,7 @@ export function createProps(ctx) {
   };
   const stump = (x, z, s = 1) => {
     at([x, 0, z], rnd(x + z) * 6, () => {
-      T('logs', PAL.bark, cy(0.26 * s, 0.32 * s, 0.34 * s, 0, 0.17 * s, 0, [0, 0, 0], 9), 1.2);
+      rcy('logs', PAL.bark, 0.26 * s, 0.32 * s, 0.34 * s, 0, 0.17 * s, 0, 1.2, 9);
       T('woodPlanks', PAL.woodLight, cy(0.22 * s, 0.22 * s, 0.02, 0, 0.345 * s, 0, [0, 0, 0], 9), 1.2);
     });
   };
@@ -976,7 +999,7 @@ export function createProps(ctx) {
     group.add(jet);
   }
   const spark = (() => {
-    const mesh = new THREE.InstancedMesh(new THREE.OctahedronGeometry(0.06, 0), new THREE.MeshBasicMaterial({ color: W.white }), 18);
+    const mesh = new THREE.InstancedMesh(new THREE.OctahedronGeometry(0.085, 0), new THREE.MeshBasicMaterial({ color: W.white }), 18);
     mesh.frustumCulled = false;
     mesh.name = 'props-sparkle';
     group.add(mesh);
