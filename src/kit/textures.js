@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { COLORS, mix } from '../core/tokens.js';
+import { gradientMap, applyShadowTint } from './toon.js';
 
 // Procedural pixel-art texture kit. Hand-painted-looking, deterministic, tiny (32/64 px), crisp.
 // Everything is painted into a plain RGB buffer first (`paintKind`, pure - testable in node),
@@ -477,14 +478,7 @@ export function texture(kind, { base = DEFAULT_BASE[kind], scale = 1 } = {}) {
   return texCache.get(key);
 }
 
-// Identical to src/kit/toon.js: shade step 0.35 -> lit face 1.0, shaded face 0.35.
-const SHADE_STEP = 0.35;
-const gradientMap = (() => {
-  const tex = new THREE.DataTexture(new Uint8Array([Math.round(SHADE_STEP * 255), 255]), 2, 1, THREE.RedFormat);
-  tex.minFilter = tex.magFilter = THREE.NearestFilter;
-  tex.needsUpdate = true;
-  return tex;
-})();
+// Same gradient map + lavender shadow tint as toon.js, so textured surfaces match flat ones.
 
 const matCache = new Map();
 
@@ -501,7 +495,7 @@ export function texturedToon(kind, baseColor = DEFAULT_BASE[kind], { repeat = [1
       map.needsUpdate = true;
       map.repeat.set(repeat[0], repeat[1]);
     }
-    matCache.set(key, new THREE.MeshToonMaterial({ color: 0xffffff, map, gradientMap }));
+    matCache.set(key, applyShadowTint(new THREE.MeshToonMaterial({ color: 0xffffff, map, gradientMap })));
   }
   return matCache.get(key);
 }
@@ -514,7 +508,7 @@ export function animatedWater({ base = DEFAULT_BASE.water, repeat = [1, 1], spee
   const t = texture('water', { base }).clone();
   t.needsUpdate = true;
   t.repeat.set(repeat[0], repeat[1]);
-  const material = new THREE.MeshToonMaterial({ color: 0xffffff, map: t, gradientMap });
+  const material = applyShadowTint(new THREE.MeshToonMaterial({ color: 0xffffff, map: t, gradientMap }));
   return {
     texture: t,
     material,
