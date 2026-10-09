@@ -12,7 +12,6 @@ import {
 } from './core/layout.js';
 import { DUR, reducedMotion } from './core/motion.js';
 import { setupLights } from './kit/toon.js';
-import { createPixelRenderer } from './kit/pixel.js';
 import { createHall } from './world/hall.js';
 import { createTown } from './world/town.js';
 import { createRandy } from './actors/randy.js';
@@ -42,12 +41,6 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.setSize(window.innerWidth, window.innerHeight, false);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFShadowMap;
-
-// Stardew-like pixel look; P toggles it.
-const pixel = createPixelRenderer(renderer);
-window.addEventListener('keydown', (e) => {
-  if (e.code === 'KeyP' && !e.repeat && !e.target.closest?.('input, textarea')) pixel.setEnabled(!pixel.enabled);
-});
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(COLORS.lavender);
@@ -407,12 +400,11 @@ function frame() {
   minimap.update(pos, { npcs: zone.npcs.map((n) => n.position), bugs: hunt.live(zone.id) });
 
   // 8. render
-  pixel.render(scene, rig.camera);
+  renderer.render(scene, rig.camera);
 }
 
 function resize() {
   renderer.setSize(window.innerWidth, window.innerHeight, false);
-  pixel.setSize(window.innerWidth, window.innerHeight);
   rig.resize(window.innerWidth, window.innerHeight);
 }
 window.addEventListener('resize', resize);
@@ -428,4 +420,4 @@ fontsReady.then(() => wait(0.4)).then(() => {
   if (deep && spotById[deep]) teleportAndOpen(deep);
 });
 
-if (import.meta.env.DEV) Object.assign(window, { __rendi: { scene, renderer, pixel, rig, appState, randy, stands, zones, enterZone, travel, openSpot } });
+if (import.meta.env.DEV) Object.assign(window, { __rendi: { scene, renderer, rig, appState, randy, stands, zones, enterZone, travel, openSpot } });
