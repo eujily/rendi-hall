@@ -124,7 +124,7 @@ void main() {
 
 export function createPixelRenderer(
   renderer,
-  { pixelSize = 3, palette = null, outline = true, paletteStrength = 0.35, dither = 0.035, edgeStrength = 1 } = {},
+  { pixelSize = 2, palette = null, outline = true, paletteStrength = 0.12, dither = 0, edgeStrength = 0.8 } = {},
 ) {
   let enabled = true;
   let size = Math.max(1, pixelSize);
