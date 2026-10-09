@@ -1020,9 +1020,24 @@
       "line": "The plant at Care grew when I walked up. I'm emotional."
     },
     {
-      "id": "v3",
+      "id": "t1",
+      "color": "purple",
+      "line": "Welcome to Rendi town! The big building is where the products live."
+    },
+    {
+      "id": "t2",
+      "color": "yellow",
+      "line": "I heard the news office has a scoop. Nell never stops talking."
+    },
+    {
+      "id": "t3",
+      "color": "red",
+      "line": "Gus says the workshop door is always open. The coffee is not."
+    },
+    {
+      "id": "t4",
       "color": "white",
-      "line": "Waitlist is in the middle. Don't tell anyone I told you."
+      "line": "Psst. There is a waitlist inside. Tell no one."
     }
   ],
   "waitlist": {
@@ -1052,6 +1067,283 @@
     "back": "Back to the hall",
     "replies": "Quick replies",
     "typing": "is typing",
-    "chatWith": "Chat with"
-  }
+    "chatWith": "Chat with",
+    "enterProducts": "Enter Products",
+    "backToTown": "Back to town",
+    "entering": "Entering Products…",
+    "leaving": "Back to town…",
+    "bugs": "Bugs",
+    "bugFixed": "fixed ✓",
+    "shipped": "v1.0 shipped 🚀",
+    "allFixed": "All bugs fixed. Deploying…",
+    "commits": [
+      "fix: off-by-one in coffee counter",
+      "feat: add more cowbell",
+      "fix: it works on my machine",
+      "chore: delete the TODO, ignore the todo",
+      "fix: remove the bug, add a feature",
+      "refactor: made it worse, then better",
+      "docs: explain the thing that explains itself",
+      "fix: turn it off and on again",
+      "perf: stop asking the server so nicely",
+      "feat: make the button click harder"
+    ]
+  },
+  "places": [
+    {
+      "id": "about",
+      "name": "About Rendi",
+      "tagline": "Most apps make you guess. We make it click.",
+      "accent": "purple",
+      "host": {
+        "name": "Ada",
+        "color": "purple"
+      },
+      "chat": {
+        "start": "intro",
+        "nodes": {
+          "intro": {
+            "msgs": [
+              {
+                "from": "host",
+                "text": "Hi Randy! I'm Ada, and I keep the lights on at Rendi."
+              },
+              {
+                "from": "host",
+                "text": "Most apps make you guess. We make it click."
+              }
+            ],
+            "replies": [
+              {
+                "label": "Who is Rendi?",
+                "to": "who"
+              },
+              {
+                "label": "What do you build?",
+                "to": "what"
+              },
+              {
+                "label": "Join the waitlist →",
+                "action": "waitlist"
+              }
+            ]
+          },
+          "who": {
+            "msgs": [
+              {
+                "from": "host",
+                "text": "A small team that thinks software should feel like a good handshake."
+              },
+              {
+                "from": "host",
+                "text": "No manuals, no mystery menus."
+              }
+            ],
+            "replies": [
+              {
+                "label": "What do you build?",
+                "to": "what"
+              },
+              {
+                "label": "Sounds good →",
+                "action": "waitlist"
+              }
+            ]
+          },
+          "what": {
+            "msgs": [
+              {
+                "from": "host",
+                "text": "Six little products for daily life: learn, pay, flow, care, home, studio."
+              },
+              {
+                "from": "host",
+                "text": "Each one clicks on first try. That is the whole rule."
+              }
+            ],
+            "replies": [
+              {
+                "label": "Tell me more",
+                "to": "who"
+              },
+              {
+                "label": "Join the waitlist →",
+                "action": "waitlist"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "how",
+      "name": "How we work",
+      "tagline": "Small steps, shipped often.",
+      "accent": "yellow",
+      "host": {
+        "name": "Gus",
+        "color": "yellow"
+      },
+      "chat": {
+        "start": "intro",
+        "nodes": {
+          "intro": {
+            "msgs": [
+              {
+                "from": "host",
+                "text": "Gus here. I run the workshop."
+              },
+              {
+                "from": "host",
+                "text": "We ship small, test with real people, and fix what makes them squint."
+              }
+            ],
+            "replies": [
+              {
+                "label": "Show me the loop",
+                "to": "loop"
+              },
+              {
+                "label": "Any secrets?",
+                "to": "secret"
+              },
+              {
+                "label": "Join the waitlist →",
+                "action": "waitlist"
+              }
+            ]
+          },
+          "loop": {
+            "msgs": [
+              {
+                "from": "host",
+                "text": "Sketch it, build it, hand it to a friend, watch their face."
+              },
+              {
+                "from": "host",
+                "text": "If the face says 'huh?', we go back to the sketch."
+              }
+            ],
+            "replies": [
+              {
+                "label": "Any secrets?",
+                "to": "secret"
+              },
+              {
+                "label": "Count me in →",
+                "action": "waitlist"
+              }
+            ]
+          },
+          "secret": {
+            "msgs": [
+              {
+                "from": "host",
+                "text": "Coffee. And deleting more than we add."
+              },
+              {
+                "from": "host",
+                "text": "Also a bug jar, which is mostly empty. Mostly."
+              }
+            ],
+            "replies": [
+              {
+                "label": "Show me the loop",
+                "to": "loop"
+              },
+              {
+                "label": "Join the waitlist →",
+                "action": "waitlist"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "news",
+      "name": "Rendi News",
+      "tagline": "Fresh from the press room.",
+      "accent": "red",
+      "host": {
+        "name": "Nell",
+        "color": "red"
+      },
+      "chat": {
+        "start": "intro",
+        "nodes": {
+          "intro": {
+            "msgs": [
+              {
+                "from": "host",
+                "text": "Nell, reporting live! Breaking: Rendi is getting ready to open its doors."
+              },
+              {
+                "from": "host",
+                "text": "Stop the presses, or at least pause the coffee."
+              }
+            ],
+            "replies": [
+              {
+                "label": "What's new?",
+                "to": "new"
+              },
+              {
+                "label": "What's next?",
+                "to": "next"
+              },
+              {
+                "label": "Join the waitlist →",
+                "action": "waitlist"
+              }
+            ]
+          },
+          "new": {
+            "msgs": [
+              {
+                "from": "host",
+                "text": "Six products, one town, and a hall full of exhibits."
+              },
+              {
+                "from": "host",
+                "text": "Also: Randy now walks. Big week for Randy."
+              }
+            ],
+            "replies": [
+              {
+                "label": "What's next?",
+                "to": "next"
+              },
+              {
+                "label": "Tell me first →",
+                "action": "waitlist"
+              }
+            ]
+          },
+          "next": {
+            "msgs": [
+              {
+                "from": "host",
+                "text": "Early access goes to the waitlist first."
+              },
+              {
+                "from": "host",
+                "text": "We will email you once, twice if it is really good."
+              }
+            ],
+            "replies": [
+              {
+                "label": "What's new?",
+                "to": "new"
+              },
+              {
+                "label": "Join the waitlist →",
+                "action": "waitlist"
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
 }

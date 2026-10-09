@@ -102,7 +102,7 @@ export function createProductView({ content, onRequestClose, onAction }) {
   }
 
   function render(id) {
-    const product = content.products.find((p) => p.id === id);
+    const product = content.products.find((p) => p.id === id) ?? content.places?.find((p) => p.id === id);
     let html;
     if (id === 'waitlist' || !product) {
       html = `<div class="pv__card pv--waitlist">

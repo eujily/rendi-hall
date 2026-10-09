@@ -1,10 +1,10 @@
-// Rendi Care — a chunky terracotta pot; a seedling that grows into a red flower
-// when you come near, and sends up little hearts when focused.
+// Rendi Care — a terracotta pot on a grass patch; a seedling grows into a red flower when you come
+// near (a watering can tips over it), butterflies flutter, a little sun spins. Focused: hearts.
+// Diorama only: origin = bottom-centre, front = +Z, fits |x|<=1.7, 0<=y<=2.4, |z|<=0.9.
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { toonMesh, flatMaterial } from '../kit/toon.js';
 import { COLORS, mix } from '../core/tokens.js';
-import { createPedestal, PEDESTAL_H } from './_pedestal.js';
 
 const clamp01 = (x) => Math.min(1, Math.max(0, x));
 const seg = (x, a, b) => clamp01((x - a) / (b - a));
@@ -54,21 +54,86 @@ function heartGeometry(size, thick) {
 }
 
 const POT_H = 0.6;
+const GROUND_H = 0.1;
 const SOIL_TOP = POT_H + 0.035;
 const STEM_H = 0.95;
+const CAN_AT = [-1.1, 0.3];
+const TUFTS = [[-1.25, -0.4], [-0.8, 0.5], [1.1, 0.45], [1.35, -0.2], [0.8, -0.55], [-0.55, -0.55], [0.7, 0.6], [-1.4, 0.05]];
 
-let dio, plant, stem, pair1, pair2, flower, heart;
+let dio, plant, stem, pair1, pair2, flower, heart, can, sun, flies = [];
 let energy = 0, focus = 0;
 
 export default {
   id: 'care',
 
   build() {
+    energy = 0;
+    focus = 0;
+    flies = [];
     const root = new THREE.Group();
-    root.add(createPedestal({ label: 'Rendi Care', accent: COLORS.red }));
 
+    // Grass patch: a flat ellipse the diorama sits on (static, so the sway never pokes out of the box).
+    const gGeo = new THREE.CylinderGeometry(1.6, 1.64, GROUND_H, 28);
+    gGeo.scale(1, 1, 0.5);
+    const ground = toonMesh(gGeo, COLORS.sage, { outline: 0.03, receive: true });
+    ground.position.y = GROUND_H / 2;
+    root.add(ground);
+
+    // Grass tufts: clusters of little cones, one merged mesh.
+    const cone = new THREE.ConeGeometry(0.045, 0.2, 4);
+    const tuftParts = [];
+    TUFTS.forEach(([x, z], i) => {
+      [[-0.05, 0.02, -0.25], [0.03, -0.03, 0.2], [0.07, 0.05, 0.5]].forEach(([dx, dz, rz], j) =>
+        tuftParts.push([cone, [x + dx, GROUND_H + 0.09, z + dz], [0, (i + j) * 0.7, rz * (j % 2 ? -1 : 1)], 0.8 + 0.25 * j]),
+      );
+    });
+    root.add(toonMesh(merged(tuftParts), mix(COLORS.sage, COLORS.black, 0.28), { outline: 0, cast: false }));
+
+    // Watering can (mascot purple): body, spout with rose, handle. Tips over the plant when approached.
+    can = new THREE.Group();
+    can.position.set(CAN_AT[0], GROUND_H, CAN_AT[1]);
+    const spoutDir = [0.84, 0.54];
+    can.add(
+      toonMesh(
+        merged([
+          [new THREE.CylinderGeometry(0.2, 0.22, 0.3, 12), [0, 0.15, 0]],
+          [new THREE.CylinderGeometry(0.035, 0.05, 0.38, 6), [0.17 + spoutDir[0] * 0.19, 0.1 + spoutDir[1] * 0.19, 0], [0, 0, -1.0]],
+          [new THREE.CylinderGeometry(0.07, 0.05, 0.05, 8), [0.17 + spoutDir[0] * 0.39, 0.1 + spoutDir[1] * 0.39, 0], [0, 0, -1.0]],
+          [new THREE.TorusGeometry(0.1, 0.025, 6, 12), [-0.23, 0.17, 0], [0, 0, 0], [0.8, 1, 1]],
+        ]),
+        COLORS.mascot,
+        { outline: 0.025 },
+      ),
+    );
+    root.add(can);
+
+    // Sun: yellow disc with rays, flat-shaded (it glows), behind-right, spins slowly.
+    const sunParts = [[new THREE.SphereGeometry(0.2, 12, 8)]];
+    for (let k = 0; k < 8; k++) {
+      const a = (k / 8) * Math.PI * 2;
+      sunParts.push([new THREE.BoxGeometry(0.05, 0.14, 0.03), [-Math.sin(a) * 0.33, Math.cos(a) * 0.33, 0], [0, 0, a]]);
+    }
+    sun = new THREE.Mesh(merged(sunParts), flatMaterial(COLORS.yellow));
+    sun.position.set(1.05, 1.85, -0.55);
+    root.add(sun);
+
+    // Butterflies: two wings merged, flapping by squashing X. Own double-sided flat material.
+    const wing = new THREE.CircleGeometry(0.065, 8);
+    const wingsGeo = merged([
+      [wing, [-0.065, 0.03, 0], [0, 0, 0], [1, 1.2, 1]],
+      [wing, [0.065, 0.03, 0], [0, 0, 0], [1, 1.2, 1]],
+      [wing, [-0.045, -0.06, 0], [0, 0, 0], [0.7, 0.8, 1]],
+      [wing, [0.045, -0.06, 0], [0, 0, 0], [0.7, 0.8, 1]],
+    ]);
+    [COLORS.purpleLink, COLORS.red].forEach((c) => {
+      const m = new THREE.Mesh(wingsGeo, new THREE.MeshBasicMaterial({ color: c, side: THREE.DoubleSide }));
+      root.add(m);
+      flies.push(m);
+    });
+
+    // Swaying group: pot + plant (everything within r<0.9 of the centre so the focused yaw stays in the box).
     dio = new THREE.Group();
-    dio.position.y = PEDESTAL_H;
+    dio.position.y = GROUND_H;
     root.add(dio);
 
     // Pot: body + rolled rim + saucer, one terracotta mesh.
@@ -96,10 +161,10 @@ export default {
 
     const stemGeo = new THREE.CylinderGeometry(0.035, 0.05, STEM_H, 6);
     stemGeo.translate(0, STEM_H / 2, 0);
-    stem = toonMesh(stemGeo, mix(COLORS.purple, COLORS.black, 0.45), { outline: 0.025 });
+    stem = toonMesh(stemGeo, mix(COLORS.purple, COLORS.black, 0.45), { outline: 0 });
     plant.add(stem);
 
-    // Two leaf pairs (each pair = one mesh, pivot on the stem axis). Pair 2 is turned 90°.
+    // Two leaf pairs (each pair = one mesh, pivot on the stem axis). Pair 2 is turned 90 deg.
     const leaf = bladeGeometry(0.34, 0.1, 0.03);
     const leafPair = (yaw) =>
       toonMesh(
@@ -181,7 +246,25 @@ export default {
     heart.rotation.y = Math.sin(ph * Math.PI * 2) * 0.35;
 
     dio.rotation.y = f * Math.sin(t * 0.5) * YAW;
+
+    // Watering can tips toward the pot when approached, settles back when idle.
+    const tip = smooth(e);
+    can.rotation.z = -0.45 * tip + Math.sin(t * 2.1) * 0.02 * tip;
+    can.position.y = GROUND_H + 0.12 * tip;
+
+    // Sun spins slowly, pulses when someone is near.
+    sun.rotation.z = -t * (0.25 + 0.5 * e);
+    sun.scale.setScalar(1 + 0.04 * Math.sin(t * 2) + 0.03 * e);
+
+    // Butterflies: lazy figure-eights around the plant, faster wings when near.
+    flies.forEach((m, i) => {
+      const sp = (0.55 + 0.25 * e) * (i ? 0.8 : 1), ph = i * 2.4, s = i ? -1 : 1;
+      const a = t * sp + ph;
+      m.position.set(s * 0.85 + Math.sin(a) * 0.45, (i ? 1.75 : 1.3) + 0.12 * Math.sin(a * 1.9), 0.1 + 0.5 * Math.cos(a * 0.8));
+      m.rotation.z = Math.cos(a) * 0.35 * s;
+      m.scale.x = 0.2 + 0.8 * Math.abs(Math.sin(t * (12 + 6 * e) + i));
+    });
   },
 
-  focusPose: { height: 1.35, zoom: 2.9 },
+  focusPose: { height: 1.2, zoom: 3.2 },
 };

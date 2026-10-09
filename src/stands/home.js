@@ -1,10 +1,10 @@
-// Rendi Home — a mini cottage: white walls, purple roof, chimney, wooden door.
-// Near: windows light up one after another. Focused: smoke puffs, door lamp on.
+// Rendi Home — a mini cottage on a grass patch: white walls, purple roof, chimney, wooden door, picket
+// fence, mailbox and a garden lamp. Near: windows light up one after another, chimney smoke.
+// Focused: door lamp + garden lamp on. Diorama only (origin bottom-centre, front +Z, fits the vitrine box).
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { toonMesh, flatMaterial } from '../kit/toon.js';
 import { COLORS, mix } from '../core/tokens.js';
-import { createPedestal, PEDESTAL_H } from './_pedestal.js';
 
 const clamp01 = (x) => Math.min(1, Math.max(0, x));
 const seg = (x, a, b) => clamp01((x - a) / (b - a));
@@ -31,7 +31,10 @@ const W = 1.3, D = 1.1, H = 1.0, PEAK = 1.6;
 const SLOPE = (PEAK - H) / (W / 2); // rise per unit x
 const ROOF_T = 0.08 / Math.cos(Math.atan(SLOPE)); // vertical thickness of the roof slab
 const OVER = 0.13; // eave overhang
-const HOUSE_YAW = -0.45; // show the front gable and the +X side to the isometric camera
+const HOUSE_YAW = -0.3; // show the front gable and a bit of the +X side to the isometric camera
+const GROUND_H = 0.1;
+const HOUSE_S = 0.85;
+const HOUSE_AT = [-0.4, 0];
 const CHIMNEY = new THREE.Vector3(0.38, 1.75, 0);
 
 // Frame bars (black) around a w×h rectangle at `centre`, facing +Z, then turned by rotY about the house axis.
@@ -49,24 +52,58 @@ function frameParts(w, h, centre, rotY, bar = 0.03, depth = 0.04) {
   ];
 }
 
-let dio, house, windows = [], lamp, puffs = [], litMat, darkMat;
+let dio, house, windows = [], lamp, bulb, puffs = [], litMat, darkMat;
 let energy = 0, focus = 0;
 
 export default {
   id: 'home',
 
   build() {
+    energy = 0;
+    focus = 0;
+    windows = [];
+    puffs = [];
     const root = new THREE.Group();
-    // Lavender rim reads too close to the floor; mascot purple keeps the Home accent in the lavender family.
-    root.add(createPedestal({ label: 'Rendi Home', accent: COLORS.mascot }));
+    dio = root;
 
-    dio = new THREE.Group();
-    dio.position.y = PEDESTAL_H;
-    root.add(dio);
+    // Grass patch (static).
+    const ground = toonMesh(new THREE.BoxGeometry(3.3, GROUND_H, 1.7), COLORS.sage, { outline: 0.03, receive: true });
+    ground.position.y = GROUND_H / 2;
+    root.add(ground);
 
+    // Only the cottage turns in the focused sway; fence/mailbox/lamp stay put so nothing leaves the box.
     house = new THREE.Group();
-    house.rotation.y = HOUSE_YAW;
-    dio.add(house);
+    house.position.set(HOUSE_AT[0], GROUND_H, HOUSE_AT[1]);
+    house.scale.setScalar(HOUSE_S);
+    root.add(house);
+
+    // Picket fence (L-shape on the right/front), mailbox post and garden lamp post: one wood mesh.
+    const wood = [];
+    const picket = new THREE.BoxGeometry(0.07, 0.34, 0.04);
+    const rail = (x, z, len, rotY) => wood.push([new THREE.BoxGeometry(len, 0.04, 0.035), [x, 0.12, z], [0, rotY, 0]], [new THREE.BoxGeometry(len, 0.04, 0.035), [x, 0.27, z], [0, rotY, 0]]);
+    for (let x = 0.95; x <= 1.5; x += 0.14) wood.push([picket, [x, 0.17, 0.7]]);
+    for (let z = 0.56; z >= -0.7; z -= 0.14) wood.push([picket, [1.55, 0.17, z]]);
+    rail(1.25, 0.7, 0.7, 0);
+    rail(1.55, 0, 1.4, Math.PI / 2);
+    wood.push([new THREE.BoxGeometry(0.06, 0.4, 0.06), [0.75, 0.2, 0.55]]); // mailbox post
+    wood.push([new THREE.BoxGeometry(0.05, 0.6, 0.05), [1.15, 0.3, -0.35]]); // lamp post
+    wood.push([new THREE.BoxGeometry(0.14, 0.04, 0.14), [1.15, 0.62, -0.35]]); // lamp cap
+    const woodMesh = toonMesh(merged(wood), COLORS.wood, { outline: 0.02 });
+    woodMesh.position.y = GROUND_H;
+    root.add(woodMesh);
+    const box = toonMesh(
+      merged([
+        [new THREE.BoxGeometry(0.2, 0.14, 0.14), [0.75, 0.47, 0.55]],
+        [new THREE.CylinderGeometry(0.07, 0.07, 0.2, 10, 1, false, 0, Math.PI), [0.75, 0.54, 0.55], [0, 0, Math.PI / 2]],
+      ]),
+      COLORS.red,
+      { outline: 0.02 },
+    );
+    box.position.y = GROUND_H;
+    root.add(box);
+    bulb = new THREE.Mesh(new THREE.SphereGeometry(0.07, 10, 8), darkMat = flatMaterial(mix(COLORS.purpleLink, COLORS.black, 0.6)));
+    bulb.position.set(1.15, GROUND_H + 0.55, -0.35);
+    root.add(bulb);
 
     // Walls + gable prism + chimney + door step — all white, one mesh.
     const gable = new THREE.Shape();
@@ -104,7 +141,6 @@ export default {
     const roof = toonMesh(roofGeo, COLORS.purple, { outline: 0.04 });
 
     // Flat details on the walls: door, three windows, door lamp. Glass swaps material when lit.
-    darkMat = flatMaterial(mix(COLORS.purpleLink, COLORS.black, 0.6));
     litMat = flatMaterial(COLORS.yellow);
     const face = D / 2 + 0.012;
     const door = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 0.52), flatMaterial(COLORS.wood));
@@ -170,25 +206,25 @@ export default {
       w.scale.set(pop, pop, 1);
     });
     lamp.material = f > 0.5 ? litMat : darkMat;
+    bulb.material = f > 0.5 ? litMat : darkMat;
+    bulb.scale.setScalar(1 + 0.4 * Math.sin(seg(f, 0.4, 0.7) * Math.PI) + 0.05 * f * Math.sin(t * 5));
     const lampPop = 1 + 0.4 * Math.sin(seg(f, 0.4, 0.7) * Math.PI);
     lamp.scale.set(lampPop, lampPop, 1);
 
     // Idle: the cottage breathes very gently, like a cartoon house.
-    house.scale.y = 1 + 0.012 * Math.sin(t * 1.5);
+    house.scale.set(HOUSE_S, HOUSE_S * (1 + 0.012 * Math.sin(t * 1.5)), HOUSE_S);
     house.rotation.z = 0.008 * Math.sin(t * 0.9);
-    house.rotation.y = HOUSE_YAW;
+    house.rotation.y = HOUSE_YAW + f * Math.sin(t * 0.5) * YAW;
 
     // Smoke loop (focused): three puffs staggered over 2.6 s, rising and swelling before they vanish.
     puffs.forEach((p, i) => {
       const T = 2.6, ph = ((t + (i * T) / 3) % T) / T;
-      const s = f * smooth(seg(ph, 0, 0.15)) * (1 - smooth(seg(ph, 0.65, 1))) * (0.5 + 0.8 * ph);
+      const s = e * (0.5 + 0.5 * f) * smooth(seg(ph, 0, 0.15)) * (1 - smooth(seg(ph, 0.65, 1))) * (0.5 + 0.8 * ph);
       p.visible = s > 0.01;
       p.scale.setScalar(Math.max(s, 0.001));
       p.position.set(CHIMNEY.x + 0.1 * Math.sin(ph * 5 + i), CHIMNEY.y + 0.05 + ph * 0.34, CHIMNEY.z + 0.06 * Math.cos(ph * 4 + i));
     });
-
-    dio.rotation.y = f * Math.sin(t * 0.5) * YAW;
   },
 
-  focusPose: { height: 1.25, zoom: 3.0 },
+  focusPose: { height: 1.2, zoom: 3.2 },
 };

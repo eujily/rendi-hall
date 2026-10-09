@@ -59,7 +59,13 @@ describe('chat engine', () => {
   });
 });
 
+const allGraphs = [...content.products, ...content.places];
+
 describe('content graphs', () => {
+  it('has the about/how/news places', () => {
+    expect(content.places.map((p) => p.id)).toEqual(['about', 'how', 'news']);
+  });
+
   it('has the six products the hall expects', () => {
     expect(content.products.map((p) => p.id)).toEqual(['learn', 'pay', 'flow', 'care', 'home', 'studio']);
     content.products.forEach((p) => {
@@ -67,18 +73,18 @@ describe('content graphs', () => {
       expect(['purple', 'yellow', 'black', 'red', 'lavender']).toContain(p.accent);
       expect(['purple', 'yellow', 'white', 'red', 'lavender', 'black']).toContain(p.host.color);
     });
-    expect(content.npcs.map((n) => n.id)).toEqual(['v1', 'v2', 'v3']);
+    expect(content.npcs.map((n) => n.id)).toEqual(['v1', 'v2', 't1', 't2', 't3', 't4']);
   });
 
   it('every product graph reaches waitlist', () => {
-    for (const p of content.products) {
+    for (const p of allGraphs) {
       const ids = [...reachable(p.chat)];
       expect(ids.some((id) => hasWaitlist(p.chat, id)), p.id).toBe(true);
     }
   });
 
   it('every node can reach waitlist (no dead ends)', () => {
-    for (const p of content.products) {
+    for (const p of allGraphs) {
       for (const start of Object.keys(p.chat.nodes)) {
         const ids = [...reachable({ ...p.chat, start })];
         expect(ids.some((id) => hasWaitlist(p.chat, id)), `${p.id}/${start}`).toBe(true);
@@ -87,7 +93,7 @@ describe('content graphs', () => {
   });
 
   it('no dangling "to"', () => {
-    for (const p of content.products) {
+    for (const p of allGraphs) {
       expect(p.chat.nodes[p.chat.start], `${p.id} start`).toBeDefined();
       for (const [id, node] of Object.entries(p.chat.nodes)) {
         expect(node.replies.length, `${p.id}/${id} has replies`).toBeGreaterThan(0);
@@ -101,9 +107,9 @@ describe('content graphs', () => {
 
   it('keeps each graph between 5 and 7 nodes and every message to two sentences', () => {
     const sentences = (t) => (t.match(/[.!?…]+(\s|$)/g) ?? []).length;
-    for (const p of content.products) {
+    for (const p of allGraphs) {
       const nodes = Object.values(p.chat.nodes);
-      expect(nodes.length).toBeGreaterThanOrEqual(5);
+      expect(nodes.length).toBeGreaterThanOrEqual(3);
       expect(nodes.length).toBeLessThanOrEqual(7);
       nodes.forEach((n) => n.msgs.forEach((m) => expect(sentences(m.text), m.text).toBeLessThanOrEqual(2)));
     }

@@ -4,7 +4,6 @@ import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { toonMesh, flatMaterial } from '../kit/toon.js';
 import { COLORS } from '../core/tokens.js';
-import { createPedestal, PEDESTAL_H } from './_pedestal.js';
 
 const clamp01 = (x) => Math.min(1, Math.max(0, x));
 const seg = (x, a, b) => clamp01((x - a) / (b - a));
@@ -78,10 +77,8 @@ export default {
 
   build() {
     const root = new THREE.Group();
-    root.add(createPedestal({ label: 'Waitlist', accent: COLORS.yellow }));
 
     dio = new THREE.Group();
-    dio.position.y = PEDESTAL_H;
     root.add(dio);
 
     desk = new THREE.Group();
@@ -193,5 +190,5 @@ export default {
     dio.rotation.y = f * Math.sin(t * 0.5) * YAW;
   },
 
-  focusPose: { height: 1.15, zoom: 3.0 },
+  focusPose: { height: 1.15, zoom: 3.2 },
 };

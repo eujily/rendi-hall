@@ -42,4 +42,23 @@ describe('appState', () => {
     s.request('stand:open', { id: 'care' });
     expect(log.at(-1)).toMatchObject({ from: 'EXPLORE', to: 'OPENING', payload: { id: 'care' } });
   });
+
+  it('travels between zones', () => {
+    const { s } = make();
+    expect(s.zone).toBe('town');
+    expect(s.request('zone:leave', { zone: 'hall' })).toBe(true);
+    expect(s.mode).toBe('TRAVEL');
+    expect(s.zone).toBe('hall');
+    expect(s.request('stand:open', { id: 'pay' })).toBe(false);
+    expect(s.request('zone:entered')).toBe(true);
+    expect(s.mode).toBe('EXPLORE');
+    expect(s.request('zone:entered')).toBe(false);
+  });
+
+  it('cannot leave a zone while a stand is open', () => {
+    const { s } = make();
+    s.request('stand:open', { id: 'pay' });
+    expect(s.request('zone:leave', { zone: 'hall' })).toBe(false);
+    expect(s.zone).toBe('town');
+  });
 });

@@ -93,6 +93,7 @@ describe('createCameraRig', () => {
 
   it('release() returns to the followed target at zoom 1', async () => {
     const rig = createCameraRig();
+    rig.setBounds(ROOM);
     rig.resize(800, 600);
     rig.follow(follower);
     await rig.focus(stand, pose);
@@ -126,9 +127,55 @@ describe('createCameraRig', () => {
     const rig = createCameraRig();
     rig.resize(800, 600);
     const far = { position: new THREE.Vector3(100, 0, -100) };
+    rig.setBounds(ROOM);
     rig.follow(far);
     const s = rig.toScreen(new THREE.Vector3(ROOM.maxX - FOLLOW_INSET, 0, ROOM.minZ + FOLLOW_INSET));
     expect(Math.abs(s.x - 400)).toBeLessThan(2);
     expect(Math.abs(s.y - 300)).toBeLessThan(2);
+  });
+
+  it('setBounds clamps gracefully for tiny rooms; no bounds means no clamp', () => {
+    const rig = createCameraRig();
+    rig.resize(800, 600);
+    rig.follow({ position: new THREE.Vector3(50, 0, 50) });
+    expect(rig.getLook().x).toBeCloseTo(50, 5);
+    rig.setBounds({ minX: -2, maxX: 2, minZ: -2, maxZ: 2 }); // inset 6.5 > room: centred
+    expect(rig.getLook().x).toBeCloseTo(0, 5);
+    expect(rig.getLook().z).toBeCloseTo(0, 5);
+  });
+
+  it('snapTo jumps instantly to the followed object at iso zoom 1', async () => {
+    const rig = createCameraRig();
+    rig.resize(800, 600);
+    rig.follow(follower);
+    await rig.focus(stand, pose);
+    rig.snapTo({ position: new THREE.Vector3(5, 0, 5) });
+    expect(rig.camera.zoom).toBe(1);
+    const s = rig.toScreen(new THREE.Vector3(5, 0, 5));
+    expect(Math.abs(s.x - 400)).toBeLessThan(2);
+    expect(Math.abs(s.y - 300)).toBeLessThan(2);
+  });
+
+  it('focus with pose.dir looks along that direction, anchors the point, and release returns to iso', async () => {
+    const rig = createCameraRig();
+    rig.resize(800, 600);
+    rig.follow(follower);
+    const wall = new THREE.Vector3(0, 0, -9);
+    const dir = { x: 0, y: 0.18, z: 1 };
+    await rig.focus(wall, { height: 1.8, zoom: 2.6, dir });
+    const p = wall.clone().setY(1.8);
+    const s = rig.toScreen(p);
+    expect(Math.abs(s.x - 200)).toBeLessThan(2);
+    expect(Math.abs(s.y - 300)).toBeLessThan(2);
+    const off = rig.camera.position.clone().sub(rig.getLook()).normalize();
+    const want = new THREE.Vector3(dir.x, dir.y, dir.z).normalize();
+    expect(off.distanceTo(want)).toBeLessThan(1e-4);
+    rig.resize(375, 812);
+    const m = rig.toScreen(p);
+    expect(Math.abs(m.x - 187.5)).toBeLessThan(2);
+    expect(Math.abs(m.y - 812 * MOBILE_ANCHOR_Y)).toBeLessThan(2);
+    await rig.release();
+    const back = rig.camera.position.clone().sub(rig.getLook()).normalize();
+    expect(back.distanceTo(new THREE.Vector3(1, 1, 1).normalize())).toBeLessThan(1e-4);
   });
 });

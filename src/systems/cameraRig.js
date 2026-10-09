@@ -1,23 +1,29 @@
 // Orthographic true-isometric camera (docs/system-design.md §4–§5).
 import * as THREE from 'three';
 import gsap from 'gsap';
-import { ROOM } from '../core/layout.js';
 import { DUR, reducedMotion } from '../core/motion.js';
 
 export const FRAME_H = 19; // world units visible vertically at zoom 1
 export const MOBILE_MAX_W = 768; // viewport width below this uses the "top half" focus layout
 const FOLLOW_LERP = 0.08; // per 1/60 s
-export const FOLLOW_INSET = 6.5; // follow target stays this far inside ROOM, so the frame never drifts out
+export const FOLLOW_INSET = 6.5; // default: follow target stays this far inside the bounds, so the frame never drifts out
 // Stand poses are authored against a 14-unit frame; scale them so framing survives FRAME_H changes.
 const POSE_FRAME_H = 17;
 const MIN_VISIBLE_W = 6.5; // on narrow screens zoom is capped so at least this many units are visible
 
-// Camera basis (true isometric: looks along −(1,1,1)). Screen-right = (1,0,−1)/√2.
-const DIR = new THREE.Vector3(1, 1, 1).normalize();
-const ISO = DIR.clone().multiplyScalar(40);
-const FWD = DIR.clone().negate();
-const RIGHT = new THREE.Vector3().crossVectors(FWD, new THREE.Vector3(0, 1, 0)).normalize();
-const UP = new THREE.Vector3().crossVectors(RIGHT, FWD).normalize();
+// Camera basis (true isometric: offset direction (1,1,1), looks along its negation).
+// Screen-right = (1,0,-1)/sqrt2 for iso. basisFor(dir) gives the basis for any camera offset direction.
+const CAM_DIST = 40;
+const WORLD_UP = new THREE.Vector3(0, 1, 0);
+const ISO_DIR = new THREE.Vector3(1, 1, 1).normalize();
+
+function basisFor(dir, right = new THREE.Vector3(), up = new THREE.Vector3()) {
+  right.crossVectors(tmpFwd.copy(dir).negate(), WORLD_UP).normalize();
+  up.crossVectors(right, tmpFwd).normalize();
+  return { right, up };
+}
+const tmpFwd = new THREE.Vector3();
+const ISO_BASIS = basisFor(ISO_DIR);
 
 export const isMobile = (vp) => vp.w < MOBILE_MAX_W;
 
@@ -46,10 +52,11 @@ export function focusZoom(poseZoom, vp) {
  * (P − look)·up = ndc.y · H/2 (W, H = zoomed frustum size), hence
  * look = P − right·(ndc.x·W/2) − up·(ndc.y·H/2).
  */
-export function focusLookTarget(worldPoint, zoom, vp, out = new THREE.Vector3()) {
+export function focusLookTarget(worldPoint, zoom, vp, out = new THREE.Vector3(), dir = null) {
   const { w, h } = viewSize(zoom, vp);
   const a = focusAnchorNdc(vp);
-  return out.copy(worldPoint).addScaledVector(RIGHT, -a.x * (w / 2)).addScaledVector(UP, -a.y * (h / 2));
+  const { right, up } = dir ? basisFor(dir) : ISO_BASIS;
+  return out.copy(worldPoint).addScaledVector(right, -a.x * (w / 2)).addScaledVector(up, -a.y * (h / 2));
 }
 
 const clampRange = (v, lo, hi) => (lo > hi ? (lo + hi) / 2 : Math.min(hi, Math.max(lo, v)));
@@ -64,13 +71,16 @@ export function createCameraRig() {
   };
   let followed = null;
   let state = 'follow'; // 'follow' | 'focus' | 'release'
-  const focus = { point: new THREE.Vector3(), zoom: 1, baseZoom: 1 };
+  const focus = { point: new THREE.Vector3(), zoom: 1, baseZoom: 1, dir: null }; // dir: unit camera-offset direction or null (iso)
+  const dirCur = ISO_DIR.clone(); // current camera-offset direction
+  let bounds = null;
+  let inset = FOLLOW_INSET;
   let tween = null;
   let pendingResolve = null;
   const tmp = new THREE.Vector3();
 
   const place = () => {
-    camera.position.copy(look).add(ISO);
+    camera.position.copy(look).addScaledVector(dirCur, CAM_DIST);
     camera.lookAt(look);
     camera.updateMatrixWorld(true); // keeps matrixWorldInverse fresh for toScreen() before render
   };
@@ -90,14 +100,16 @@ export function createCameraRig() {
   const followTarget = (out = new THREE.Vector3()) => {
     if (!followed) return out.copy(look);
     const p = followed.position;
+    if (!bounds) return out.set(p.x, 0, p.z);
     return out.set(
-      clampRange(p.x, ROOM.minX + FOLLOW_INSET, ROOM.maxX - FOLLOW_INSET),
+      clampRange(p.x, bounds.minX + inset, bounds.maxX - inset),
       0,
-      clampRange(p.z, ROOM.minZ + FOLLOW_INSET, ROOM.maxZ - FOLLOW_INSET),
+      clampRange(p.z, bounds.minZ + inset, bounds.maxZ - inset),
     );
   };
   // Where the camera wants to be right now (live: recomputed every tick so resize/movement are honoured).
-  const goal = (out) => (state === 'focus' ? focusLookTarget(focus.point, focus.zoom, vp, out) : followTarget(out));
+  const goal = (out) => (state === 'focus' ? focusLookTarget(focus.point, focus.zoom, vp, out, focus.dir) : followTarget(out));
+  const goalDir = () => (state === 'focus' && focus.dir ? focus.dir : ISO_DIR);
   const goalZoom = () => (state === 'focus' ? focus.zoom : 1);
 
   // Settle any running animation: the promise it owes is always resolved, never leaked.
@@ -113,7 +125,11 @@ export function createCameraRig() {
     cancel();
     const fromLook = look.clone();
     const fromZoom = camera.zoom;
+    const fromDir = dirCur.clone();
+    const dq = new THREE.Quaternion();
     const apply = (t) => {
+      dq.setFromUnitVectors(fromDir, goalDir()); // slerp of the offset direction
+      dirCur.copy(fromDir).applyQuaternion(new THREE.Quaternion().slerp(dq, t)).normalize();
       goal(tmp);
       look.lerpVectors(fromLook, tmp, t);
       setZoom(lerp(fromZoom, goalZoom(), t));
@@ -156,6 +172,26 @@ export function createCameraRig() {
         place();
       }
     },
+    setBounds(b, newInset = FOLLOW_INSET) {
+      bounds = b ?? null;
+      inset = newInset;
+      if (state === 'follow' && followed) {
+        followTarget(look);
+        place();
+      }
+    },
+    /** Jump instantly: follow `obj`, iso view, zoom 1 (zone switching). */
+    snapTo(obj) {
+      cancel();
+      followed = obj ?? followed;
+      state = 'follow';
+      focus.dir = null;
+      dirCur.copy(ISO_DIR);
+      setZoom(1);
+      followTarget(look);
+      place();
+    },
+    getLook: () => look,
     update(dt = 1 / 60) {
       if (state === 'follow' && followed) {
         const k = 1 - Math.pow(1 - FOLLOW_LERP, Math.min(Math.max(dt, 0), 0.1) * 60);
@@ -166,6 +202,7 @@ export function createCameraRig() {
     focus(worldPos, pose) {
       focus.point.copy(worldPos);
       focus.point.y += pose.height ?? 0;
+      focus.dir = pose.dir ? new THREE.Vector3(pose.dir.x, pose.dir.y, pose.dir.z).normalize() : null;
       focus.baseZoom = (pose.zoom ?? 1) * (FRAME_H / POSE_FRAME_H);
       focus.zoom = focusZoom(focus.baseZoom, vp);
       state = 'focus';
@@ -189,7 +226,7 @@ export function createCameraRig() {
         // A running tween picks the new goal up on its next tick; a settled one is snapped here.
         focus.zoom = focusZoom(focus.baseZoom, vp);
         if (!tween) {
-          focusLookTarget(focus.point, focus.zoom, vp, look);
+          focusLookTarget(focus.point, focus.zoom, vp, look, focus.dir);
           setZoom(focus.zoom);
         }
       }

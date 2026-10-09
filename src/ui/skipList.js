@@ -5,7 +5,10 @@ import { escapeHtml, trapTab } from './util.js';
 import './hud.css';
 
 // "Skip the walk": small dialog that lists every stand. Arrow keys move, Enter picks, Esc closes.
+// `products` is a flat [{id,name,tagline}] or grouped [{group, items:[...]}]; numbering runs across groups.
 export function createSkipList(products, onPick) {
+  const groups = products.length && products[0].items ? products : [{ group: null, items: products }];
+  let n = 0;
   const U = content.ui;
   const root = document.createElement('div');
   root.className = 'skip';
@@ -17,13 +20,17 @@ export function createSkipList(products, onPick) {
         <p class="skip__sub">${escapeHtml(U.skipTitle)}</p>
       </header>
       <ul class="skip__list">
-        ${products
+        ${groups
           .map(
-            (p, i) => `<li><button type="button" class="skip__item" data-id="${escapeHtml(p.id)}">
-              <span class="skip__num" aria-hidden="true">${String(i + 1).padStart(2, '0')}</span>
+            (g) => `${g.group ? `<li class="skip__group" role="presentation">${escapeHtml(g.group)}</li>` : ''}${g.items
+              .map(
+                (p) => `<li><button type="button" class="skip__item" data-id="${escapeHtml(p.id)}">
+              <span class="skip__num" aria-hidden="true">${String(++n).padStart(2, '0')}</span>
               <span class="skip__text"><span class="skip__name">${escapeHtml(p.name)}</span><span class="skip__tag">${escapeHtml(p.tagline ?? '')}</span></span>
               <span class="skip__go" aria-hidden="true">→</span>
             </button></li>`,
+              )
+              .join('')}`,
           )
           .join('')}
       </ul>

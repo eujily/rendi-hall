@@ -80,4 +80,31 @@ describe('movement.velocityToward', () => {
     }
     expect(Math.hypot(pos.x - target.x, pos.z - target.z)).toBeLessThan(0.15);
   });
+
+  describe('box colliders', () => {
+    const box = { type: 'box', minX: -1, maxX: 1, minZ: -1, maxZ: 1 };
+
+    it('stops at the face (inflated by radius) and slides along it', () => {
+      let p = { x: -3, z: 0.5 };
+      for (let i = 0; i < 30; i++) p = step(p, { x: 4, z: 1 }, 1 / 60, [box], ROOM);
+      expect(p.x).toBeLessThanOrEqual(-1 - R + 1e-6);
+      expect(p.z).toBeGreaterThan(0.9); // slid along the face
+    });
+
+    it('does not tunnel through at high speed', () => {
+      const p = step({ x: -5, z: 0 }, { x: 400, z: 0 }, 0.1, [box], ROOM);
+      expect(p.x).toBeLessThanOrEqual(-1 - R + 1e-6);
+    });
+
+    it('pushes a point that starts inside out through the nearest face', () => {
+      const p = step({ x: 0.8, z: 0 }, { x: 0, z: 0 }, 0.016, [box], ROOM);
+      expect(p.x).toBeCloseTo(1 + R, 6);
+      expect(p.z).toBeCloseTo(0, 6);
+    });
+
+    it('mixes with circle colliders', () => {
+      const p = step({ x: 3, z: 0 }, { x: -4, z: 0 }, 1, [box, { x: 3, z: 0.1, r: 0.5 }], ROOM);
+      expect(Math.hypot(p.x - 3, p.z - 0.1)).toBeGreaterThanOrEqual(0.5 + R - 1e-6);
+    });
+  });
 });
