@@ -1,0 +1,5 @@
+/* STUB — replaced by agent ⑥ */
+.hud-logo { position: fixed; top: 24px; left: 24px; font: italic 800 32px/1 var(--font-display); letter-spacing: -0.01em; pointer-events: none; }
+.loader { position: fixed; inset: 0; display: grid; place-items: center; background: var(--lavender); font: italic 800 32px var(--font-display); z-index: 100; transition: opacity .3s; }
+.prompt { position: fixed; transform: translate(-50%, -100%); padding: 8px 16px; background: var(--white); border: 1px solid var(--black); border-radius: var(--radius-pill); font: italic 700 16px var(--font-display); cursor: pointer; }
+.panel { position: fixed; top: 0; right: 0; bottom: 0; width: 50%; background: var(--lavender); border-left: 1px solid var(--black); padding: 48px; }

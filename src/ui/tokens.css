@@ -1,0 +1,27 @@
+/* Brand tokens — mirror of src/core/tokens.js. Agent ⑥ extends, never renames. */
+@import '@fontsource/montserrat/500.css';
+@import '@fontsource/montserrat/700-italic.css';
+@import '@fontsource/montserrat/800-italic.css';
+@import '@fontsource/albert-sans/600.css';
+@import '@fontsource/albert-sans/700.css';
+
+:root {
+  --lavender: #e7deed;
+  --yellow: #f5d360;
+  --purple: #b77ff5;
+  --purple-link: #a04aff;
+  --red: #d63532;
+  --black: #000;
+  --white: #fff;
+  --mascot: #cba6f4;
+  --font-display: 'Montserrat', system-ui, sans-serif;
+  --font-body: 'Albert Sans', system-ui, sans-serif;
+  --radius-card: 20px;
+  --radius-control: 12px;
+  --radius-pill: 999px;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; overflow: hidden; background: var(--lavender); color: var(--black); font-family: var(--font-body); font-weight: 600; }
+#scene { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+:focus-visible { outline: 2px solid var(--purple-link); outline-offset: 2px; }

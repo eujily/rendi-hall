@@ -1,0 +1,17 @@
+{
+  "products": [
+    { "id": "learn", "name": "Rendi Learn", "tagline": "Languages, learned in context." },
+    { "id": "pay", "name": "Rendi Pay", "tagline": "Money, in plain words." },
+    { "id": "flow", "name": "Rendi Flow", "tagline": "Interfaces that show the next step." },
+    { "id": "care", "name": "Rendi Care", "tagline": "Habits without the guilt." },
+    { "id": "home", "name": "Rendi Home", "tagline": "One tap per moment." },
+    { "id": "studio", "name": "Rendi Studio", "tagline": "Tasks that explain why." }
+  ],
+  "npcs": [
+    { "id": "v1", "line": "Have you tried the Pay stand? Finally a bank that talks like a human." },
+    { "id": "v2", "line": "The plant at Care grew when I walked up. I'm emotional." },
+    { "id": "v3", "line": "Waitlist is in the middle. Don't tell anyone I told you." }
+  ],
+  "waitlist": { "title": "Join the waitlist", "body": "Be first when Rendi apps go live.", "cta": "Join the waitlist →", "thanks": "Thanks! We'll make it click for you." },
+  "ui": { "loading": "Making it click…", "skip": "Skip the walk" }
+}
